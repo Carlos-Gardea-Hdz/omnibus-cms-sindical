@@ -3,9 +3,46 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
-@source '../**/*.js';
+@source '../js/**/*.tsx';
+
+/* Dark mode via class strategy on <html> (SPEC §4.5). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Brand — Corporate CMS (SPEC §1.5) */
+    --color-primary: #dd00ff;
+    --color-primary-light: #e647ff;
+    --color-primary-dark: #9211cf;
+    --color-primary-50: #fdf0ff;
+    --color-danger: #a03cc7;
+    --color-danger-dark: #9211cf;
+
+    /* Dark surfaces */
+    --color-surface-dark: #1e293b;
+    --color-bg-dark: #0f172a;
+    --color-border-dark: #334155;
+
+    /* Typography */
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --spacing-18: 4.5rem;
+    --animate-fade-in: fade-in 0.4s ease-out;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@layer utilities {
+    .text-gradient-primary {
+        @apply bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent;
+    }
 }
