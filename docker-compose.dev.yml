@@ -1,0 +1,93 @@
+# ==============================================================================
+# Corporate CMS — Local Development Docker Compose
+# ==============================================================================
+# Backing services for local dev (the Laravel app itself runs on the host via
+# `php artisan serve` + `pnpm dev`, NOT in a container during development).
+# Stack: PostgreSQL 18 + Valkey 8.0 + Meilisearch. Production uses
+# docker-compose.prod.yml (Traefik, secrets, built image) — keep them separate.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down
+# ==============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # PostgreSQL 18 — primary datastore
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:18-alpine
+    container_name: cms-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: corporate_cms
+      POSTGRES_USER: corporate_cms
+      POSTGRES_PASSWORD: secret            # dev only — prod uses docker secrets
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U corporate_cms -d corporate_cms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # --------------------------------------------------------------------------
+  # Valkey 8.0 — cache, queues, sessions
+  # --------------------------------------------------------------------------
+  valkey:
+    image: valkey/valkey:8.0-alpine
+    container_name: cms-dev-valkey
+    restart: unless-stopped
+    command: >
+      valkey-server
+        --maxmemory 128mb
+        --maxmemory-policy allkeys-lru
+        --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkeydata:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # Meilisearch — full-text search (NEWS-06)
+  # --------------------------------------------------------------------------
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    container_name: cms-dev-meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: masterKey          # dev only — match .env MEILISEARCH_KEY
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilidata:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # Mailpit — catch outgoing mail in dev (contact-form / notifications)
+  # --------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: cms-dev-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+volumes:
+  pgdata:
+  valkeydata:
+  meilidata:
