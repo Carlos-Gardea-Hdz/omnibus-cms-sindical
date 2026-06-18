@@ -2,10 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', static fn () => Inertia::render('Landing/Index', [
-    'latestArticles' => [],
-    'latestJobs' => [],
-]))->name('home');
+Route::get('/', LandingController::class)->name('home');

@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Staging env (contains APP_KEY)
+.env.staging
