@@ -1,0 +1,31 @@
+# Corporate CMS — STAGING on the VPS (uses the pre-built, locally-verified image).
+# Image is transferred via `docker save | ssh docker load`; no build context here.
+services:
+  app:
+    image: corporate-cms-staging:test
+    container_name: corporate-cms-staging
+    restart: unless-stopped
+    env_file: .env.staging
+    networks:
+      - traefik_public
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8000/up') !== false ? 0 : 1);"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_public"
+      - "traefik.http.routers.cms-staging.rule=Host(`cms.carlosgardea.cloud`)"
+      - "traefik.http.routers.cms-staging.entrypoints=websecure"
+      - "traefik.http.routers.cms-staging.tls=true"
+      - "traefik.http.routers.cms-staging.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.cms-staging-http.rule=Host(`cms.carlosgardea.cloud`)"
+      - "traefik.http.routers.cms-staging-http.entrypoints=web"
+      - "traefik.http.routers.cms-staging-http.middlewares=cms-staging-redirect"
+      - "traefik.http.middlewares.cms-staging-redirect.redirectscheme.scheme=https"
+      - "traefik.http.services.cms-staging.loadbalancer.server.port=8000"
+networks:
+  traefik_public:
+    external: true

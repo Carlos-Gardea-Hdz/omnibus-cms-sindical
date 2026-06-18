@@ -8,7 +8,7 @@
 FROM node:24-alpine AS assets
 WORKDIR /app
 RUN corepack enable
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY resources ./resources
 COPY vite.config.js tsconfig.json ./
