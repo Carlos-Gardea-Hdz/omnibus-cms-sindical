@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Organization\Actions;
 
 use App\Domain\Content\Models\Article;
+use App\Domain\Jobs\Models\JobPosting;
 use App\Domain\Organization\Exceptions\BranchHasRepresentativesException;
 use App\Domain\Organization\Models\Branch;
 use App\Support\OrganizationScope;
@@ -21,10 +22,12 @@ use Illuminate\Support\Facades\Storage;
  * so the restrict FK is never tripped and no 500 reaches the user (§11.4 #3).
  *
  * Step 2 — else, inside ONE transaction, perform an APPLICATION-LEVEL cascade
- * (never a DB ON DELETE CASCADE, §6.1): soft-delete every article on the branch and
- * remove its physical featured-image file, then soft-delete the branch itself
- * (§11.4 #2). Article is read withoutGlobalScope(OrganizationScope) so the delete
- * reaches EVERY article of the branch regardless of the acting context.
+ * (never a DB ON DELETE CASCADE, §6.1): soft-delete every article AND job posting on
+ * the branch (an orphaned active job pointing at a trashed branch would 500 the public
+ * board, whose eager-load drops the scope but not SoftDeletes), remove article
+ * featured-image files, then soft-delete the branch itself (§11.4 #2). Children are
+ * read withoutGlobalScope(OrganizationScope) so the delete reaches EVERY child of the
+ * branch regardless of the acting context.
  */
 final class DeleteBranchAction
 {
@@ -38,13 +41,21 @@ final class DeleteBranchAction
             ->where('branch_id', $branch->getKey())
             ->get();
 
-        DB::transaction(function () use ($branch, $articles): void {
+        $jobPostings = JobPosting::withoutGlobalScope(OrganizationScope::class)
+            ->where('branch_id', $branch->getKey())
+            ->get();
+
+        DB::transaction(function () use ($branch, $articles, $jobPostings): void {
             foreach ($articles as $article) {
                 if (is_string($article->featured_image_path)) {
                     Storage::disk('public')->delete($article->featured_image_path);
                 }
 
                 $article->delete();
+            }
+
+            foreach ($jobPostings as $jobPosting) {
+                $jobPosting->delete();
             }
 
             $branch->delete();

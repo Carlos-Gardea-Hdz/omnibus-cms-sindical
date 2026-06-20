@@ -44,7 +44,18 @@
     "representative_shift.morning": "Matutino",
     "representative_shift.evening": "Vespertino",
     "representative_shift.night": "Nocturno",
+    "jobs.created": "Vacante creada correctamente.",
+    "jobs.updated": "Vacante actualizada correctamente.",
+    "jobs.deleted": "Vacante eliminada correctamente.",
+    "jobs.status_changed": "Estado de la vacante actualizado correctamente.",
+    "jobs.error.invalid_transition": "Transición de estado no permitida para esta vacante.",
+    "jobs.error.branch_org_mismatch": "La sucursal seleccionada no pertenece a esta organización.",
+    "jobs.error.salary_range": "El salario máximo no puede ser menor que el salario mínimo.",
     "article_status.draft": "Borrador",
     "article_status.published": "Publicado",
-    "article_status.archived": "Archivado"
+    "article_status.archived": "Archivado",
+    "job_status.draft": "Borrador",
+    "job_status.active": "Activa",
+    "job_status.paused": "Pausada",
+    "job_status.closed": "Cerrada"
 }

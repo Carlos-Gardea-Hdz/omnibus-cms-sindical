@@ -29,12 +29,14 @@ const copy = {
         nav_login: 'Entrar',
         hero_tag: 'Plataforma Empresarial',
         hero_title: 'Gestión corporativa multi-sucursal, reimaginada.',
-        hero_sub: 'Búsqueda full-text, RBAC de 4 niveles y analítica segmentada. Una reconstrucción Laravel 12 de un sistema en producción real.',
+        hero_sub:
+            'Búsqueda full-text, RBAC de 4 niveles y analítica segmentada. Una reconstrucción Laravel 12 de un sistema en producción real.',
         hero_cta: 'Explorar demo',
         hero_cta2: 'Ver noticias',
         news_title: 'Últimas noticias',
         news_empty: 'Aún no hay noticias publicadas. Pronto verás aquí lo más reciente.',
         jobs_title: 'Vacantes activas',
+        jobs_all: 'Ver todas',
         jobs_empty: 'No hay vacantes activas por ahora.',
         feat_title: 'Construido sobre estándares de producción',
         footer: 'Reconstrucción Laravel 12 · Demo sin fricción para reclutadores.',
@@ -45,12 +47,14 @@ const copy = {
         nav_login: 'Sign in',
         hero_tag: 'Corporate Platform',
         hero_title: 'Multi-branch corporate management, reimagined.',
-        hero_sub: 'Full-text search, 4-level RBAC and segmented analytics. A Laravel 12 rebuild of a real production system.',
+        hero_sub:
+            'Full-text search, 4-level RBAC and segmented analytics. A Laravel 12 rebuild of a real production system.',
         hero_cta: 'Explore demo',
         hero_cta2: 'View news',
         news_title: 'Latest news',
         news_empty: 'No published news yet. The latest articles will appear here soon.',
         jobs_title: 'Active openings',
+        jobs_all: 'View all',
         jobs_empty: 'No active openings right now.',
         feat_title: 'Built on production-grade standards',
         footer: 'Laravel 12 rebuild · Frictionless demo for recruiters.',
@@ -97,13 +101,22 @@ export default function Landing({ latestArticles = [], latestJobs = [] }: Landin
                 {/* Header */}
                 <header className="sticky top-0 z-30 border-b border-neutral-200/70 bg-white/80 backdrop-blur-md dark:border-border-dark dark:bg-bg-dark/80">
                     <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-                        <a href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-                            <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary-dark text-white">C</span>
+                        <a
+                            href="/"
+                            className="flex items-center gap-2 text-lg font-extrabold tracking-tight"
+                        >
+                            <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary-dark text-white">
+                                C
+                            </span>
                             <span className="text-gradient-primary">Corporate CMS</span>
                         </a>
                         <nav className="hidden items-center gap-7 text-sm font-medium text-neutral-600 sm:flex dark:text-slate-300">
-                            <a href="#news" className="transition hover:text-primary">{t.nav_news}</a>
-                            <a href="#jobs" className="transition hover:text-primary">{t.nav_jobs}</a>
+                            <a href="#news" className="transition hover:text-primary">
+                                {t.nav_news}
+                            </a>
+                            <a href="#jobs" className="transition hover:text-primary">
+                                {t.nav_jobs}
+                            </a>
                         </nav>
                         <div className="flex items-center gap-2">
                             <button
@@ -144,10 +157,16 @@ export default function Landing({ latestArticles = [], latestJobs = [] }: Landin
                             {t.hero_sub}
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-                            <a href="/login" className="rounded-xl bg-primary px-7 py-3 font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark">
+                            <a
+                                href="/login"
+                                className="rounded-xl bg-primary px-7 py-3 font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark"
+                            >
                                 {t.hero_cta}
                             </a>
-                            <a href="#news" className="rounded-xl border border-neutral-300 px-7 py-3 font-semibold transition hover:border-primary hover:text-primary dark:border-border-dark">
+                            <a
+                                href="#news"
+                                className="rounded-xl border border-neutral-300 px-7 py-3 font-semibold transition hover:border-primary hover:text-primary dark:border-border-dark"
+                            >
                                 {t.hero_cta2}
                             </a>
                         </div>
@@ -180,8 +199,14 @@ export default function Landing({ latestArticles = [], latestJobs = [] }: Landin
                                     href={`/articles/${a.slug}`}
                                     className="group rounded-2xl border border-neutral-200 bg-white p-6 transition hover:-translate-y-1 hover:border-primary hover:shadow-xl hover:shadow-primary/10 dark:border-border-dark dark:bg-surface-dark"
                                 >
-                                    <h3 className="font-semibold transition group-hover:text-primary">{a.title}</h3>
-                                    {a.subtitle && <p className="mt-2 text-sm text-neutral-500 dark:text-slate-400">{a.subtitle}</p>}
+                                    <h3 className="font-semibold transition group-hover:text-primary">
+                                        {a.title}
+                                    </h3>
+                                    {a.subtitle && (
+                                        <p className="mt-2 text-sm text-neutral-500 dark:text-slate-400">
+                                            {a.subtitle}
+                                        </p>
+                                    )}
                                 </a>
                             ))}
                         </div>
@@ -190,7 +215,15 @@ export default function Landing({ latestArticles = [], latestJobs = [] }: Landin
 
                 {/* Jobs */}
                 <section id="jobs" className="mx-auto max-w-6xl px-6 pb-24">
-                    <h2 className="text-2xl font-bold tracking-tight">{t.jobs_title}</h2>
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                        <h2 className="text-2xl font-bold tracking-tight">{t.jobs_title}</h2>
+                        <a
+                            href="/jobs"
+                            className="text-sm font-semibold text-primary transition hover:text-primary-dark"
+                        >
+                            {t.jobs_all} &rarr;
+                        </a>
+                    </div>
                     {latestJobs.length === 0 ? (
                         <p className="mt-6 rounded-2xl border border-dashed border-neutral-300 p-10 text-center text-neutral-500 dark:border-border-dark dark:text-slate-400">
                             {t.jobs_empty}
@@ -198,10 +231,20 @@ export default function Landing({ latestArticles = [], latestJobs = [] }: Landin
                     ) : (
                         <div className="mt-8 grid gap-4 sm:grid-cols-2">
                             {latestJobs.map((j) => (
-                                <div key={j.id} className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-5 dark:border-border-dark dark:bg-surface-dark">
-                                    <span className="font-medium">{j.title}</span>
-                                    {j.salary_display && <span className="text-sm font-semibold text-primary">{j.salary_display}</span>}
-                                </div>
+                                <a
+                                    key={j.id}
+                                    href={`/jobs/${j.id}`}
+                                    className="group flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-primary hover:shadow-lg hover:shadow-primary/10 dark:border-border-dark dark:bg-surface-dark"
+                                >
+                                    <span className="font-medium transition group-hover:text-primary">
+                                        {j.title}
+                                    </span>
+                                    {j.salary_display && (
+                                        <span className="text-sm font-semibold text-primary">
+                                            {j.salary_display}
+                                        </span>
+                                    )}
+                                </a>
                             ))}
                         </div>
                     )}

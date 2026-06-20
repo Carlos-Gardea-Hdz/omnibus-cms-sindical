@@ -168,9 +168,11 @@ arch('Organization domain only leans on Shared, Models, App\\Support and framewo
         'App\Domain\Shared',
         'App\Models',
         'App\Support',
-        // The §3.2 branch→article cascade target + the articles() relation — a
-        // cross-domain MODEL reference (not another domain's Action), CONTRACT §8.
+        // The branch deletion cascade targets — cross-domain MODEL references (not
+        // another domain's Action): articles (§3.2) and job postings (slice 004, so an
+        // orphaned active job can't outlive its branch and 500 the public board).
         'App\Domain\Content\Models',
+        'App\Domain\Jobs\Models',
         'Illuminate',
         // Carbon is the framework's date library (ships with Illuminate). OrganizationData
         // type-hints CarbonImmutable for the `registered_at` DATE field — the same clock
@@ -205,6 +207,56 @@ arch('Organization data DTOs are final')
 
 arch('Organization enums are string-backed')
     ->expect('App\Domain\Organization\Enums')
+    ->toBeEnums()
+    ->toBeStringBackedEnums();
+
+/*
+ * Slice 004 — Jobs domain (org-scoped job board + public active listing). The
+ * cross-isolation rule is the load-bearing one: the Jobs domain may lean only on
+ * Shared, the cross-domain Eloquent base model (App\Models\User — the actor argument
+ * the Create/Update Actions receive), and the App\Support spine. JobPosting belongsTo
+ * Branch / Organization (RESTRICT FKs) and the Jobs-local branch→org assertion checks a
+ * Branch row, so the Jobs domain references the Organization MODELS directly — a
+ * cross-domain FK MODEL reference is ALLOWED; calling another domain's Actions/Services
+ * is NOT (only App\Domain\Organization\Models is whitelisted, never the whole namespace).
+ * It must never reach into HTTP or another domain's behaviour. Jobs has no UploadedFile
+ * (the description is plain text), so no Illuminate\Http\UploadedFile boundary is needed.
+ * __(), now() and request() are framework globals, not domain deps.
+ */
+
+arch('Jobs domain only leans on Shared, Models, App\\Support and framework boundaries')
+    ->expect('App\Domain\Jobs')
+    ->toOnlyUse([
+        'App\Domain\Shared',
+        'App\Models',
+        'App\Support',
+        // Cross-domain FK MODEL references are allowed (JobPosting belongsTo Branch /
+        // Organization; the branch→org assertion queries Branch). Organization Actions /
+        // Services remain forbidden — only \Models is whitelisted.
+        'App\Domain\Organization\Models',
+        'Illuminate',
+        'Spatie\LaravelData',
+        'Spatie\TypeScriptTransformer',
+        'Database\Factories',
+    ])
+    ->ignoring(['__', 'now', 'request']);
+
+arch('the Jobs domain never depends on HTTP')
+    ->expect('App\Domain\Jobs')
+    ->not->toUse('Illuminate\Http');
+
+arch('Jobs actions are final')
+    ->expect('App\Domain\Jobs\Actions')
+    ->classes()
+    ->toBeFinal();
+
+arch('Jobs data DTOs are final')
+    ->expect('App\Domain\Jobs\Data')
+    ->classes()
+    ->toBeFinal();
+
+arch('Jobs enums are string-backed')
+    ->expect('App\Domain\Jobs\Enums')
     ->toBeEnums()
     ->toBeStringBackedEnums();
 

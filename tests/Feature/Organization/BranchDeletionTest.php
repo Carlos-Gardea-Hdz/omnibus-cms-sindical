@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Content\Models\Article;
+use App\Domain\Jobs\Enums\JobStatus;
+use App\Domain\Jobs\Models\JobPosting;
 use App\Domain\Organization\Models\Branch;
 use App\Domain\Organization\Models\Organization;
 use App\Domain\Organization\Models\Representative;
@@ -12,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
@@ -117,4 +120,27 @@ it('soft-deletes a branch with neither representatives nor articles (302 + delet
         ->assertSessionHasNoErrors();
 
     $this->assertSoftDeleted('branches', ['id' => $branch->getKey()]);
+});
+
+it('CASCADES active job postings on branch delete so the public board never 500s (slice-004 cross-slice guard)', function (): void {
+    $organization = Organization::factory()->create();
+    $branch = Branch::factory()->for($organization)->create();
+
+    // An ACTIVE job on the branch, no representatives → the delete proceeds.
+    $job = JobPosting::factory()->forBranch($branch)->create(['status' => JobStatus::Active]);
+
+    actingAs(branchAdmin())
+        ->delete(route('admin.branches.destroy', $branch))
+        ->assertRedirect()
+        ->assertSessionHas('success', __('branches.deleted'))
+        ->assertSessionHasNoErrors();
+
+    // Branch AND its active job are soft-deleted together — no orphan job pointing at
+    // a trashed branch (which would 500 the public board: its eager-load drops the org
+    // scope but not SoftDeletes, so $job->branch would be null).
+    $this->assertSoftDeleted('branches', ['id' => $branch->getKey()]);
+    $this->assertSoftDeleted('job_postings', ['id' => $job->getKey()]);
+
+    // The public board stays reachable and the cascaded job is gone (was a 500 before).
+    get(route('jobs.index'))->assertOk();
 });

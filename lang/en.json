@@ -44,7 +44,18 @@
     "representative_shift.morning": "Morning",
     "representative_shift.evening": "Evening",
     "representative_shift.night": "Night",
+    "jobs.created": "Job posting created successfully.",
+    "jobs.updated": "Job posting updated successfully.",
+    "jobs.deleted": "Job posting deleted successfully.",
+    "jobs.status_changed": "Job posting status updated successfully.",
+    "jobs.error.invalid_transition": "Illegal status transition for this job posting.",
+    "jobs.error.branch_org_mismatch": "The selected branch does not belong to this organization.",
+    "jobs.error.salary_range": "The maximum salary cannot be lower than the minimum salary.",
     "article_status.draft": "Draft",
     "article_status.published": "Published",
-    "article_status.archived": "Archived"
+    "article_status.archived": "Archived",
+    "job_status.draft": "Draft",
+    "job_status.active": "Active",
+    "job_status.paused": "Paused",
+    "job_status.closed": "Closed"
 }

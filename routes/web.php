@@ -7,12 +7,14 @@ use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DirectorController;
+use App\Http\Controllers\Admin\JobController;
 use App\Http\Controllers\Admin\MunicipalityController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\RepresentativeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
+use App\Http\Controllers\Public\JobController as PublicJobController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -62,6 +64,22 @@ Route::middleware(['auth', 'role:editor', 'org.scope'])->group(function (): void
     Route::post('/admin/categories', [CategoryController::class, 'store'])->name('admin.categories.store');
     Route::put('/admin/categories/{category}', [CategoryController::class, 'update'])->name('admin.categories.update');
     Route::delete('/admin/categories/{category}', [CategoryController::class, 'destroy'])->name('admin.categories.destroy');
+
+    /*
+     * Job-posting authoring + lifecycle (SPEC §3.4 JOB-01/02; §7.2, §10.2 / slice-004 §8).
+     * The WHOLE Jobs lifecycle is editor-scoped — unlike Article publish (a manager privilege),
+     * the JobStatus toggle stays here at `role:editor` (JOB-02), NOT gated separately at manager+.
+     * JobPosting is org-scoped, so 'org.scope' on this group auto-confines a manager/editor: the
+     * index/branch picker filter to their own org and a cross-org route-model-bound {job} 404s.
+     * The salary-range + cross-org-branch + transition guards live in the Actions, not here.
+     */
+    Route::get('/admin/jobs', [JobController::class, 'index'])->name('admin.jobs.index');
+    Route::get('/admin/jobs/create', [JobController::class, 'create'])->name('admin.jobs.create');
+    Route::post('/admin/jobs', [JobController::class, 'store'])->name('admin.jobs.store');
+    Route::get('/admin/jobs/{job}/edit', [JobController::class, 'edit'])->name('admin.jobs.edit');
+    Route::put('/admin/jobs/{job}', [JobController::class, 'update'])->name('admin.jobs.update');
+    Route::delete('/admin/jobs/{job}', [JobController::class, 'destroy'])->name('admin.jobs.destroy');
+    Route::post('/admin/jobs/{job}/status', [JobController::class, 'toggleStatus'])->name('admin.jobs.status');
 });
 
 /*
@@ -121,3 +139,13 @@ Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): voi
  * is org-confined). views_count tracking is DEFERRED (Analytics).
  */
 Route::get('/articles/{article}', [PublicArticleController::class, 'show'])->name('articles.show');
+
+/*
+ * Public job board (SPEC §3.4 JOB-03 / slice-004 §8). Both routes resolve WITHOUT the
+ * OrganizationScope (public content is unconfined — an active job is visible to any visitor,
+ * even a logged-in editor whose session is org-confined) and are filtered to JobStatus::Active,
+ * so a draft / paused / closed job (of ANY org) 404s on /jobs/{job} and is absent from /jobs.
+ * The `{job}` is bound MANUALLY in the controller (a string param), not via scoped route binding.
+ */
+Route::get('/jobs', [PublicJobController::class, 'index'])->name('jobs.index');
+Route::get('/jobs/{job}', [PublicJobController::class, 'show'])->name('jobs.show');

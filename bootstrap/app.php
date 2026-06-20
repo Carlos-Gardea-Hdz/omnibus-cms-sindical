@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Content\Exceptions\CategoryInUseException;
 use App\Domain\Content\Exceptions\InvalidArticleTransitionException;
+use App\Domain\Jobs\Exceptions\InvalidJobTransitionException;
 use App\Domain\Organization\Exceptions\BranchHasRepresentativesException;
 use App\Domain\Organization\Exceptions\DirectorAlreadyAssignedException;
 use App\Domain\Organization\Exceptions\MunicipalityInUseException;
@@ -88,6 +89,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // graceful 302 + a `status` field error on web (422 for JSON), never a 500.
         // Mirrors UNIGES InvalidStatusTransitionException.
         $exceptions->render(function (InvalidArticleTransitionException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['status' => $e->getMessage()]);
+        });
+
+        // An illegal JobStatus transition (e.g. closed→active) is a domain guard, not a
+        // server fault (SPEC §3.4 JOB-02 / slice-004 §6): surface it as the same graceful
+        // 302 + a `status` field error on web (422 for JSON), never a 500. Mirrors the
+        // Article transition render above.
+        $exceptions->render(function (InvalidJobTransitionException $e, Request $request) {
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage()], 422)
                 : back()->withErrors(['status' => $e->getMessage()]);
