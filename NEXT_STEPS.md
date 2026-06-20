@@ -26,16 +26,17 @@
 - Migrations: **only** the 3 Laravel defaults (`users`, `cache`, `jobs`).
 - Seeders: only `DatabaseSeeder.php` (default).
 
-**Quality gates (run 2026-06-19 in-container)**
+**Quality gates (foundation hardening landed 2026-06-20 — all green)**
 
 | Gate | Result | Evidence |
 |------|--------|----------|
-| **Pint `--test`** | ❌ FAIL (2 issues) | `bootstrap/app.php` (`fully_qualified_strict_types`, `ordered_imports`) and `tests/Pest.php` (`fully_qualified_strict_types`, `single_line_after_imports`) — both default scaffold files. 31 files scanned. |
-| **PHPStan / Larastan** | ⚠️ NOT CONFIGURED | No `phpstan.neon*`; larastan not a dependency. SPEC §11.7 requires level 9 (vault wants level 10). Cannot run. |
-| **Pest (`php artisan test`)** | ✅ PASS | 3 tests / 12 assertions: `Unit\ExampleTest`, `Feature\ExampleTest` (both scaffold), `Feature\LandingTest` (renders the Inertia Landing component). **No arch tests.** |
-| **`tsc --noEmit`** | ❌ FAIL (1 error) | `resources/js/app.tsx:12` `TS2769: No overload matches this call` — the `import.meta.glob('./Pages/**/*.tsx')` lazy loaders don't match the CSR `resolve` overload. Pre-existing. |
-| **`pnpm build`** | ✅ PASS (per prior recon) | Vite 7, ~614 modules, `app.js` ~316 kB / gzip ~100 kB. |
-| **`pnpm lint`** | — N/A | No `lint` script / ESLint configured. |
+| **Pint `--test`** | ✅ PASS | 34 files clean. `pint.json` added with SPEC §11.7 rules (`declare_strict_types`, `final_class`, `void_return`, `fully_qualified_strict_types`, `ordered_imports`). |
+| **PHPStan / Larastan** | ✅ PASS (level 9) | `phpstan.neon` at level 9 (SPEC §11.7), larastan ^3.10. `composer analyse` → **No errors** on existing code (no baseline). |
+| **Pest (`vendor/bin/pest`)** | ✅ PASS | 5 passed / 23 assertions across Unit, Feature, **Arch** suites. (3 arch tests emit a PHP 8.5 `ReflectionProperty::setAccessible` deprecation from pest-plugin-arch — they still pass.) |
+| **`tsc --noEmit`** | ✅ PASS | `app.tsx` glob typed with `ResolvedComponent` + `{ import: 'default' }`; clean. |
+| **`pnpm build`** | ✅ PASS | Vite 7, 614 modules, `app.js` ~316 kB / gzip ~100 kB. |
+| **`pnpm lint`** | ✅ PASS | ESLint 9 flat config wired; clean (removed dead `app.js`/`bootstrap.js`/`welcome.blade.php`). |
+| **`pnpm test`** | ✅ PASS | Vitest 4 + RTL: 2 tests (toolchain smoke + matchMedia mock). |
 
 **Docs reconciliation done in this closeout (2026-06-19)**
 - Created **`AGENTS.md`** as the canonical agent rulebook (agents.md standard),
@@ -104,28 +105,36 @@ exists is effectively "Phase 0: scaffold + landing shell." Phases 2–4 are gree
 
 ## 3. Next steps
 
-### A. Reconcile config drift with reality (do first — cheap, unblocks gates)
-- [ ] Bump `composer.json` `"php"` to `^8.5`.
-- [ ] Replace `npm install` / `npm run build` / `npx concurrently` / `npm run dev`
-      in the composer `setup` and `dev` scripts with their pnpm equivalents.
-- [ ] Add `composer analyse` (PHPStan/Larastan), `composer format` (Pint), and a
-      `composer test` that runs Pest with arch tests — match `AGENTS.md`/SPEC §11.
-- [ ] Remove the stale `pnpm.onlyBuiltDependencies` key from `package.json`
-      (move to `pnpm-workspace.yaml` or the correct location if still needed).
+### A. Reconcile config drift with reality (do first — cheap, unblocks gates) — ✅ DONE (2026-06-20)
+- [x] Bump `composer.json` `"php"` to `^8.5`.
+- [x] Replace `npm install` / `npm run build` / `npx concurrently` / `npm run dev`
+      in the composer `setup` and `dev` scripts with their pnpm equivalents
+      (`pnpm install` / `pnpm run build` / `pnpm dlx concurrently` / `pnpm run dev`).
+- [x] Add `composer analyse` (PHPStan), `composer format` / `composer format:check`
+      (Pint), `composer types` (typescript:transform), and `composer test` that runs
+      Pest incl. arch tests — mirrors UNIGES/SPEC §11.
+- [x] Remove the stale `pnpm.onlyBuiltDependencies` key from `package.json`
+      (`pnpm-workspace.yaml` already carried the correct `allowBuilds: esbuild`).
 
-### B. Fix the two real gate failures (quick wins)
-- [ ] Run `./vendor/bin/pint` to fix `bootstrap/app.php` + `tests/Pest.php` (then
-      gate is green).
-- [ ] Fix `resources/js/app.tsx:12` `TS2769` — type the `import.meta.glob` result
-      or follow the current Laravel+Inertia 2 `resolvePageComponent` typing pattern
-      so the CSR overload matches.
+### B. Fix the two real gate failures (quick wins) — ✅ DONE (2026-06-20)
+- [x] Ran `./vendor/bin/pint` (+ added `pint.json` with the SPEC §11.7 rules) —
+      Pint gate now clean (34 files).
+- [x] Fixed `resources/js/app.tsx` `TS2769` — typed `import.meta.glob<ResolvedComponent>`
+      with `{ import: 'default' }` and `resolvePageComponent<ResolvedComponent>`, so
+      the loader resolves to the component and matches the CSR `Promise<ReactComponent>`
+      overload. `tsc --noEmit` clean; `pnpm build` unchanged (614 modules).
 
-### C. Stand up tooling the DDD law depends on
-- [ ] Install `spatie/laravel-data` + `spatie/laravel-typescript-transformer`;
-      wire `php artisan typescript:transform`.
-- [ ] Install larastan; add `phpstan.neon` at level 9 (SPEC) / 10 (vault) and get a
-      clean baseline.
-- [ ] Add Vitest / React Testing Library + ESLint (SPEC §11.3) and a `pnpm lint` script.
+### C. Stand up tooling the DDD law depends on — ✅ DONE (2026-06-20)
+- [x] Installed `spatie/laravel-data` (^4.23) + `spatie/laravel-typescript-transformer`
+      (^3.3); wired `php artisan typescript:transform` via a published, configured
+      `TypeScriptTransformerServiceProvider` → `resources/js/types/generated.d.ts`.
+- [x] Installed `larastan/larastan` (^3.10); added `phpstan.neon` at **level 9** (SPEC),
+      `composer analyse` → **No errors** on existing code (no baseline needed).
+- [x] Added Vitest 4 + React Testing Library + ESLint 9 (flat config) + Prettier
+      (SPEC §11.3): `vitest.config.ts`, `resources/js/tests/setup.ts` (matchMedia mock),
+      a foundation smoke test, and `pnpm lint` / `pnpm test` / `pnpm types` scripts.
+- [x] Added empty `app/Domain/` tree (8 domains, `.gitkeep`) + `tests/Arch/ArchitectureTest.php`
+      (strict_types, final domain classes, anemic controllers, no Form Requests).
 
 ### D. Build SPEC Phase 1 — Foundation + Auth + Content (MVP)
 - [ ] Create the `app/Domain/` tree per SPEC §5.4 (Identity, Organization, Content,

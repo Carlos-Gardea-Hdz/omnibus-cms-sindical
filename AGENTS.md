@@ -52,14 +52,14 @@ Meilisearch/Scout, TipTap, demo middleware, arch tests, PHPStan config.
 PHP 8.5 · Laravel 12 · PostgreSQL 18 · Valkey/Redis · Meilisearch · React 19 +
 TypeScript + Inertia 2 · Tailwind v4 · Pest · Docker + Traefik v3.
 
-> **Known drift (must be reconciled before/while building Phase 1 — tracked in
-> `NEXT_STEPS.md`):** `composer.json` currently pins `php: ^8.2` and ships **none**
-> of the SPEC-mandated packages (`spatie/laravel-data`, `spatie/laravel-typescript-transformer`,
-> `laravel/scout` + `meilisearch-php`, `mews/purifier`, larastan). There is no
-> `phpstan.neon` and no `composer analyse|format|test` scripts. The composer
-> `setup`/`dev` scripts still call `npm`/`npx` (violates the pnpm-only law). Do not
-> treat the SPEC "Key Packages" list as installed — install them as you reach the
-> phase that needs them, and bump `php` to `^8.5`.
+> **Foundation tooling reconciled (2026-06-20):** `composer.json` pins `php: ^8.5`;
+> `spatie/laravel-data` + `spatie/laravel-typescript-transformer` + `larastan/larastan`
+> are installed and wired (`phpstan.neon` level 9, `composer analyse|format|format:check|test|types`,
+> `php artisan typescript:transform` → `resources/js/types/generated.d.ts`). The
+> composer `setup`/`dev` scripts use pnpm; the stale `pnpm.onlyBuiltDependencies`
+> key is gone. Frontend test/lint toolchain (Vitest 4 + RTL + ESLint 9 + Prettier)
+> is wired. All gates are green — see `NEXT_STEPS.md`. **Still NOT installed** (install
+> when the phase needs them): `laravel/scout` + `meilisearch-php`, `mews/purifier`.
 
 ## Engineering law (summary — full text in the vault)
 

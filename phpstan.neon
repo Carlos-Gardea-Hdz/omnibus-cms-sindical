@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 9
+
+    # First-party application code (SPEC §11.7). Domain code will live under
+    # app/Domain/** as it is built; it is already in scope here.
+    paths:
+        - app
+
+    # Level 9 enforces: no mixed, explicit return types, typed collections,
+    # strict comparisons. Keep the bar high — do not lower the level.
+    treatPhpDocTypesAsCertain: false
