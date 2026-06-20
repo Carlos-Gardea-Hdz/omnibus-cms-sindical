@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Identity\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,10 +16,14 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table): void {
             $table->id();
+            $table->string('username', 60)->unique();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('role', 20)->default(UserRole::Editor->value);
+            $table->foreignId('organization_id')->nullable();   // DEFERRED: Organization domain; no FK target yet
+            $table->boolean('is_demo')->default(false);          // DEFERRED: demo slice
             $table->rememberToken();
             $table->timestamps();
         });

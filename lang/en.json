@@ -1,0 +1,7 @@
+{
+    "auth.failed": "These credentials do not match our records.",
+    "role.super_admin": "Super Admin",
+    "role.administrator": "Administrator",
+    "role.manager": "Manager",
+    "role.editor": "Editor"
+}

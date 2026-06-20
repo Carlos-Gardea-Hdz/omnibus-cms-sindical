@@ -1,0 +1,7 @@
+{
+    "auth.failed": "Estas credenciales no coinciden con nuestros registros.",
+    "role.super_admin": "Superadministrador",
+    "role.administrator": "Administrador",
+    "role.manager": "Gerente",
+    "role.editor": "Editor"
+}

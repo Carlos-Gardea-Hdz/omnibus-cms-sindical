@@ -1,0 +1,31 @@
+{
+    "app.name": "Corporate CMS",
+
+    "nav.utilities": "utilidades",
+    "nav.logout": "Cerrar sesión",
+
+    "theme.light": "Claro",
+    "theme.dark": "Oscuro",
+    "theme.system": "Sistema",
+    "theme.toggle": "Cambiar tema",
+
+    "locale.toggle": "Cambiar idioma",
+
+    "auth.login.title": "Iniciar sesión",
+    "auth.login.subtitle": "Ingresa tus credenciales para acceder al panel de administración.",
+    "auth.login.field.username": "Usuario",
+    "auth.login.field.password": "Contraseña",
+    "auth.login.remember": "Mantener la sesión iniciada",
+    "auth.login.submit": "Entrar",
+    "auth.login.signing_in": "Iniciando sesión…",
+
+    "admin.dashboard.title": "Panel",
+    "admin.dashboard.greeting": "Hola",
+    "admin.dashboard.subtitle": "Este es el panel de administración del CMS. Las secciones de contenido aparecerán aquí a medida que se construyan.",
+    "admin.dashboard.shell_placeholder": "Aún no hay módulos disponibles. Pronto verás aquí las herramientas de gestión.",
+
+    "role.super_admin": "Super administrador",
+    "role.administrator": "Administrador",
+    "role.manager": "Gerente",
+    "role.editor": "Editor"
+}

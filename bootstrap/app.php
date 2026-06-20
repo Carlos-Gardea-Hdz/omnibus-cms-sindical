@@ -20,6 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
             App\Http\Middleware\HandleInertiaRequests::class,
             Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // Level-based RBAC gate (SPEC §3.1 AUTH-03, §10.2): `->middleware('role:editor')`.
+        // The 'auth' and 'guest' aliases ship with Laravel — no registration needed.
+        $middleware->alias([
+            'role' => App\Http\Middleware\EnsureRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
