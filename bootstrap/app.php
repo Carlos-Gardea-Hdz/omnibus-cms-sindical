@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Content\Exceptions\CategoryInUseException;
+use App\Domain\Content\Exceptions\InvalidArticleTransitionException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,5 +31,23 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Deleting a category another article still references is a referential
+        // guard, not a server fault (SPEC §3.3 CAT-02): surface it as a graceful
+        // 302 + a `category` field error on web (422 for JSON), never an unhandled
+        // 500 from the restrict FK. Mirrors UNIGES CatalogInUseException.
+        $exceptions->render(function (CategoryInUseException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['category' => $e->getMessage()]);
+        });
+
+        // An illegal ArticleStatus transition (e.g. archived→draft) is a domain
+        // guard, not a server fault (SPEC §3.3 NEWS-07): surface it as the same
+        // graceful 302 + a `status` field error on web (422 for JSON), never a 500.
+        // Mirrors UNIGES InvalidStatusTransitionException.
+        $exceptions->render(function (InvalidArticleTransitionException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['status' => $e->getMessage()]);
+        });
     })->create();

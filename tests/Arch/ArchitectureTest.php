@@ -77,3 +77,58 @@ arch('Identity enums are string-backed')
     ->expect('App\Domain\Identity\Enums')
     ->toBeEnums()
     ->toBeStringBackedEnums();
+
+/*
+ * Slice 002 — Content domain (Article + Category CRUD, the publication state
+ * machine and the stored-XSS sanitizer). The cross-isolation rule is the
+ * load-bearing one: the Content domain may lean only on Shared, the cross-domain
+ * Eloquent base model (App\Models\User — the CreateArticleAction author argument,
+ * CONTRACT §6), Illuminate, and the Spatie Data / TypeScriptTransformer boundaries.
+ * Laravel\Scout is whitelisted ahead of the deferred Search slice (NEWS-06) even
+ * though Article is not Searchable yet. It must never reach into HTTP or another
+ * domain. The __() translation helper (used by the in-use / invalid-transition
+ * exception messages) is a framework global, not a domain dependency, so it is
+ * ignored.
+ */
+
+arch('Content domain only leans on Shared, Models and framework boundaries')
+    ->expect('App\Domain\Content')
+    ->toOnlyUse([
+        'App\Domain\Shared',
+        'App\Models',
+        'Illuminate',
+        'Spatie\LaravelData',
+        'Spatie\TypeScriptTransformer',
+        'Laravel\Scout',
+        // The Content Eloquent models live in app/Domain (unlike User), so their
+        // HasFactory binding must name the factory explicitly via newFactory().
+        // Factories are test/seed infrastructure, not a cross-domain or HTTP
+        // dependency — whitelisted like the future-Search Laravel\Scout boundary.
+        'Database\Factories',
+    ])
+    // __() and now() are framework globals (translation + Carbon clock), not domain
+    // dependencies — the Actions use now() for published_at / image-path timestamps.
+    ->ignoring(['__', 'now']);
+
+arch('the Content domain never depends on HTTP')
+    ->expect('App\Domain\Content')
+    ->not->toUse('Illuminate\Http')
+    // UploadedFile is the standard Spatie Data file-upload type; ArticleData's
+    // ?UploadedFile $featured_image (CONTRACT §4) and the storage-writing Actions
+    // are its legitimate boundary. No request/response coupling leaks in.
+    ->ignoring('Illuminate\Http\UploadedFile');
+
+arch('Content actions are final')
+    ->expect('App\Domain\Content\Actions')
+    ->classes()
+    ->toBeFinal();
+
+arch('Content data DTOs are final')
+    ->expect('App\Domain\Content\Data')
+    ->classes()
+    ->toBeFinal();
+
+arch('Content enums are string-backed')
+    ->expect('App\Domain\Content\Enums')
+    ->toBeEnums()
+    ->toBeStringBackedEnums();
