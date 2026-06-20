@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Content\Enums\ArticleStatus;
 use App\Domain\Content\Models\Article;
 use App\Domain\Content\Models\Category;
+use App\Domain\Organization\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
@@ -21,6 +22,15 @@ uses(RefreshDatabase::class);
  * lock the EXACT snake_case prop shape each page receives — a future controller/
  * page drift fails CI. Runs against PostgreSQL 18 (RefreshDatabase) as an editor
  * (manager for the gated pages where needed).
+ *
+ * SLICE-003 RETROFIT (§17 firewall): the editor route group now carries the
+ * 'org.scope' middleware, so an editor is CONFINED to its own org. The
+ * Articles/Index listing and the Articles/Edit route-model binding therefore only
+ * resolve articles in the editor's org — so the editor + the article fixtures for
+ * those two pages are pinned to ONE shared organization (else the confined list is
+ * empty / the edit binding 404s). Categories/Index (a shared catalog, NOT
+ * org-scoped), Articles/Create (category options only) and the public Articles/Show
+ * (unscoped public route) are unaffected and act as a plain editor.
  */
 
 function contentEditor(): User
@@ -28,11 +38,22 @@ function contentEditor(): User
     return User::factory()->editor()->create();
 }
 
-it('locks the Categories/Index prop contract (snake_case + articles_count)', function (): void {
-    $category = Category::factory()->create(['name' => 'Comunicados', 'slug' => 'comunicados', 'description' => 'Oficiales']);
-    Article::factory()->count(2)->create(['category_id' => $category->getKey()]);
+/** An editor confined to the given org (org.scope resolves only its articles). */
+function contentOrgEditor(Organization $organization): User
+{
+    return User::factory()->editor()->forOrganization($organization)->create();
+}
 
-    actingAs(contentEditor())
+it('locks the Categories/Index prop contract (snake_case + articles_count)', function (): void {
+    // Category is a SHARED (non-org-scoped) catalog, but its articles_count is a
+    // withCount('articles') subquery that DOES inherit the Article org scope. So the
+    // counted articles + the acting editor share one org (§17 firewall) — else the
+    // confined-null editor's subquery would count 0 instead of 2.
+    $org = Organization::factory()->createOne();
+    $category = Category::factory()->create(['name' => 'Comunicados', 'slug' => 'comunicados', 'description' => 'Oficiales']);
+    Article::factory()->forOrganization($org)->count(2)->create(['category_id' => $category->getKey()]);
+
+    actingAs(contentOrgEditor($org))
         ->get(route('admin.categories.index'))
         ->assertOk()
         ->assertInertia(
@@ -49,9 +70,11 @@ it('locks the Categories/Index prop contract (snake_case + articles_count)', fun
 });
 
 it('locks the Articles/Index prop contract: paginated data + category/author names + filters', function (): void {
+    $org = Organization::factory()->createOne();
     $category = Category::factory()->create(['name' => 'Eventos']);
-    $author = User::factory()->editor()->create(['name' => 'Reportero Uno']);
-    $article = Article::factory()->create([
+    $author = contentOrgEditor($org)->forceFill(['name' => 'Reportero Uno']);
+    $author->save();
+    $article = Article::factory()->forOrganization($org)->create([
         'title' => 'Nota destacada',
         'slug' => 'nota-destacada',
         'status' => ArticleStatus::Draft,
@@ -60,7 +83,7 @@ it('locks the Articles/Index prop contract: paginated data + category/author nam
         'published_at' => null,
     ]);
 
-    actingAs(contentEditor())
+    actingAs($author)
         ->get(route('admin.articles.index'))
         ->assertOk()
         ->assertInertia(
@@ -101,8 +124,9 @@ it('locks the Articles/Create prop contract: category options only', function ()
 });
 
 it('locks the Articles/Edit prop contract: full article shape + category options', function (): void {
+    $org = Organization::factory()->createOne();
     $category = Category::factory()->create(['name' => 'Cultura']);
-    $article = Article::factory()->create([
+    $article = Article::factory()->forOrganization($org)->create([
         'title' => 'Editable',
         'slug' => 'editable',
         'subtitle' => 'Sub',
@@ -113,7 +137,7 @@ it('locks the Articles/Edit prop contract: full article shape + category options
         'published_at' => null,
     ]);
 
-    actingAs(contentEditor())
+    actingAs(contentOrgEditor($org))
         ->get(route('admin.articles.edit', $article))
         ->assertOk()
         ->assertInertia(

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Content\Models;
 
 use App\Domain\Content\Enums\ArticleStatus;
+use App\Domain\Organization\Models\Branch;
+use App\Domain\Organization\Models\Organization;
 use App\Models\User;
+use App\Support\OrganizationScope;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +23,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * physical (hard) delete. `author` and `category` are non-nullable belongsTo
  * (RESTRICT FK) — never |null in PHPDoc, so PHPStan L9 stays green.
  *
+ * Slice-003 retrofit: org-scoped via the global OrganizationScope (a manager/editor
+ * sees only their own org's articles; super_admin/administrator/CLI are unconfined).
+ * `organization_id`/`branch_id` were added NULLABLE with a restrict FK (Deviation C);
+ * the Create/Update Actions stamp organization_id from the author so every NEW
+ * article is non-null. Both belongsTo are NULLABLE (existing rows may be null) — so
+ * `?Organization`/`?Branch` in PHPDoc, |null on the columns.
+ *
  * @property int $id
+ * @property int|null $organization_id
+ * @property int|null $branch_id
  * @property int $category_id
  * @property int $author_id
  * @property string $title
@@ -39,6 +51,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read User $author
  * @property-read Category $category
+ * @property-read Organization|null $organization
+ * @property-read Branch|null $branch
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ArticleImage> $images
  */
 final class Article extends Model
@@ -50,6 +64,8 @@ final class Article extends Model
 
     /** @var list<string> */
     protected $fillable = [
+        'organization_id',
+        'branch_id',
         'category_id',
         'author_id',
         'title',
@@ -63,6 +79,11 @@ final class Article extends Model
         'meta_description',
         'published_at',
     ];
+
+    protected static function booted(): void
+    {
+        self::addGlobalScope(new OrganizationScope);
+    }
 
     /**
      * @return array<string, string>
@@ -91,6 +112,22 @@ final class Article extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * @return BelongsTo<Organization, $this>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    /**
+     * @return BelongsTo<Branch, $this>
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     /**

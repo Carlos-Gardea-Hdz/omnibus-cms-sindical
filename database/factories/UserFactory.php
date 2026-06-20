@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Identity\Enums\UserRole;
+use App\Domain\Organization\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -77,6 +78,19 @@ final class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::SuperAdmin,
+        ]);
+    }
+
+    /**
+     * Pin the user to an organization (slice-003). The default state leaves
+     * organization_id null (unchanged from slices 001/002) so prior tests stay
+     * green; this state is used by the scoping fixtures (a confined manager/editor
+     * needs an org or it fails closed).
+     */
+    public function forOrganization(Organization $organization): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'organization_id' => $organization->getKey(),
         ]);
     }
 }

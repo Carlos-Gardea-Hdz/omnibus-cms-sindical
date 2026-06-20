@@ -7,6 +7,8 @@ namespace Database\Factories;
 use App\Domain\Content\Enums\ArticleStatus;
 use App\Domain\Content\Models\Article;
 use App\Domain\Content\Models\Category;
+use App\Domain\Organization\Models\Branch;
+use App\Domain\Organization\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -28,6 +30,12 @@ final class ArticleFactory extends Factory
         $title = Str::limit($title, 140, '');
 
         return [
+            // Org/branch default NULL (slice-003 retrofit): an unconfined-safe
+            // default keeps the 248 prior tests green — they never go through the
+            // org.scope middleware, so a null org is invisible to the (no-op,
+            // unconfined) OrganizationScope. Pin an org with forOrganization().
+            'organization_id' => null,
+            'branch_id' => null,
             'category_id' => Category::factory(),
             'author_id' => User::factory(),
             'title' => $title,
@@ -78,6 +86,23 @@ final class ArticleFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'featured_image_path' => 'articles/'.now()->format('Y/m').'/'.Str::random(20).'.webp',
+        ]);
+    }
+
+    /** Pin the article to an existing organization (crown-test / scoping fixtures). */
+    public function forOrganization(Organization $organization): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'organization_id' => $organization->getKey(),
+        ]);
+    }
+
+    /** Pin the article to an existing branch (and its organization). */
+    public function forBranch(Branch $branch): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'organization_id' => $branch->organization_id,
+            'branch_id' => $branch->getKey(),
         ]);
     }
 

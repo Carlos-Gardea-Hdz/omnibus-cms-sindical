@@ -18,6 +18,11 @@ use Illuminate\Validation\ValidationException;
  * uploaded featured image replaces the previous one; the old physical file is
  * removed only AFTER the DB write commits, and a freshly written file is cleaned
  * up if the transaction rolls back — no orphaned bytes either way.
+ *
+ * Slice-003 retrofit: organization_id and branch_id are intentionally ABSENT from
+ * the update attribute set — an edit never moves an article across tenants, so the
+ * author's stamped organization_id is preserved untouched (never nulled out), and
+ * branch_id stays as-is until the editor picker lands (Gate F).
  */
 final class UpdateArticleAction
 {

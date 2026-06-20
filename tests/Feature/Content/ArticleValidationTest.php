@@ -19,6 +19,11 @@ uses(RefreshDatabase::class);
  * — NEVER a 422 (the cardinal CMS web-validation rule). content must be a non-empty
  * TipTap doc ({type:'doc',content:[…]}); category_id must Exist; title/subtitle are
  * length-bounded. Runs against PostgreSQL 18 via RefreshDatabase.
+ *
+ * SLICE-003 RETROFIT (§17 firewall): the store request runs through 'org.scope', so
+ * the "nothing persisted" assertions read with withoutGlobalScopes() — they assert
+ * the PHYSICAL absence of a row, not merely that the leftover null-org confinement
+ * hides it. This makes the guard genuinely falsifiable under the new scope.
  */
 
 /** A valid TipTap doc body for the fields that are NOT under test. */
@@ -50,7 +55,7 @@ it('rejects invalid create input with a 302 + session error, NEVER a 422, and pe
         ->assertStatus(302)                // explicitly NOT 422
         ->assertSessionHasErrors($field);
 
-    expect(Article::query()->count())->toBe(0);
+    expect(Article::query()->withoutGlobalScopes()->count())->toBe(0);
 })->with([
     'missing title' => [
         fn (array $p): array => array_diff_key($p, ['title' => null]),
@@ -113,5 +118,5 @@ it('rejects a non-image featured upload with a 302 + session error', function ()
         ->assertStatus(302)
         ->assertSessionHasErrors('featured_image');
 
-    expect(Article::query()->count())->toBe(0);
+    expect(Article::query()->withoutGlobalScopes()->count())->toBe(0);
 });

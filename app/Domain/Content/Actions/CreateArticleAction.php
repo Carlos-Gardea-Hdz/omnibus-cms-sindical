@@ -20,6 +20,11 @@ use Illuminate\Validation\ValidationException;
  * stored-XSS gate, so the DB never holds an unsafe node. The featured image (if
  * provided) is written to disk inside the transaction's success path; on rollback
  * the freshly written file is removed so no orphaned bytes survive.
+ *
+ * Slice-003 retrofit: the article is stamped with the author's organization_id
+ * (null-safe — a null-org author, e.g. a super_admin, stamps null, never throws) so
+ * every new article belongs to its author's tenant. branch_id is stamped only when
+ * the editor supplies one (the picker is deferred — Gate F).
  */
 final class CreateArticleAction
 {
@@ -38,6 +43,11 @@ final class CreateArticleAction
 
         try {
             return DB::transaction(fn (): Article => Article::create([
+                'organization_id' => $author->organization_id,
+                // branch_id stays null until the editor picker lands (Gate F):
+                // ArticleData carries no branch_id field yet, so there is nothing
+                // to stamp. The column + FK + auto-org-stamp ship now; the UI later.
+                'branch_id' => null,
                 'category_id' => $data->category_id,
                 'author_id' => $author->getKey(),
                 'title' => $data->title,

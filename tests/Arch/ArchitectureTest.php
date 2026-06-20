@@ -96,6 +96,16 @@ arch('Content domain only leans on Shared, Models and framework boundaries')
     ->toOnlyUse([
         'App\Domain\Shared',
         'App\Models',
+        // Slice-003 retrofit (CONTRACT §12): the Article model gains organization()
+        // and branch() belongsTo relations, so it references the Organization-domain
+        // MODELS. This is a cross-domain MODEL reference (the org-scoping retrofit's
+        // relation targets), NOT a call into another domain's Action — the §11.2
+        // "never another domain's Actions" rule is preserved. The mirror edge
+        // (Organization → Content\Models\Article) is whitelisted symmetrically above.
+        'App\Domain\Organization\Models',
+        // The App\Support scope spine: the retrofit adds the global OrganizationScope
+        // to Article via booted(), exactly the UNIGES DemoScope placement.
+        'App\Support',
         'Illuminate',
         'Spatie\LaravelData',
         'Spatie\TypeScriptTransformer',
@@ -132,3 +142,80 @@ arch('Content enums are string-backed')
     ->expect('App\Domain\Content\Enums')
     ->toBeEnums()
     ->toBeStringBackedEnums();
+
+/*
+ * Slice 003 — Organization domain (Organization/Branch/Director/Representative/
+ * Municipality CRUD + the org-scoping retrofit). The cross-isolation rule is the
+ * load-bearing one: the Organization domain may lean only on Shared, the
+ * cross-domain Eloquent base model (App\Models\User — the acting-user argument the
+ * Actions receive), the App\Support scope spine (OrganizationScope / OrganizationContext,
+ * domain-neutral so the org-scoped models add the global scope WITHOUT importing
+ * App\Domain\Identity — exactly the UNIGES DemoScope placement), Illuminate, and the
+ * Spatie Data / TypeScriptTransformer / Database\Factories boundaries.
+ *
+ * The one DELIBERATE cross-domain edge is App\Domain\Content\Models\Article: the
+ * Organization/Branch models expose an articles() relation and DeleteBranchAction
+ * runs the §3.2 ORG-02 application-level branch→article cascade (CONTRACT §8). That
+ * is a reference to another domain's MODEL (the cascade target), NOT a call into
+ * another domain's ACTION — the §11.2 "never another domain's Actions" rule is
+ * preserved. It must never reach into HTTP (except the UploadedFile boundary for
+ * logo/photo uploads). __() and now() are framework globals, not domain deps.
+ */
+
+arch('Organization domain only leans on Shared, Models, App\\Support and framework boundaries')
+    ->expect('App\Domain\Organization')
+    ->toOnlyUse([
+        'App\Domain\Shared',
+        'App\Models',
+        'App\Support',
+        // The §3.2 branch→article cascade target + the articles() relation — a
+        // cross-domain MODEL reference (not another domain's Action), CONTRACT §8.
+        'App\Domain\Content\Models',
+        'Illuminate',
+        // Carbon is the framework's date library (ships with Illuminate). OrganizationData
+        // type-hints CarbonImmutable for the `registered_at` DATE field — the same clock
+        // dependency the Content domain leans on via the now() helper, surfaced here as an
+        // explicit class import because the DTO declares a typed property, not a call.
+        'Carbon',
+        'Spatie\LaravelData',
+        'Spatie\TypeScriptTransformer',
+        'Database\Factories',
+    ])
+    // __(), now() and request() are framework globals (translation, Carbon clock, and the
+    // current-request accessor OrganizationData::rules() uses to detect create-vs-update from
+    // the bound route model), not domain dependencies — ignored like the Content domain's globals.
+    ->ignoring(['__', 'now', 'request']);
+
+arch('the Organization domain never depends on HTTP')
+    ->expect('App\Domain\Organization')
+    ->not->toUse('Illuminate\Http')
+    // UploadedFile is the standard Spatie Data file-upload type; the logo/photo DTOs
+    // and the storage-writing Actions are its legitimate boundary.
+    ->ignoring('Illuminate\Http\UploadedFile');
+
+arch('Organization actions are final')
+    ->expect('App\Domain\Organization\Actions')
+    ->classes()
+    ->toBeFinal();
+
+arch('Organization data DTOs are final')
+    ->expect('App\Domain\Organization\Data')
+    ->classes()
+    ->toBeFinal();
+
+arch('Organization enums are string-backed')
+    ->expect('App\Domain\Organization\Enums')
+    ->toBeEnums()
+    ->toBeStringBackedEnums();
+
+/*
+ * The scope spine lives under App\Support precisely so the org-scoped domain models
+ * (Article, Branch, Director, Representative) can add the global OrganizationScope
+ * WITHOUT importing App\Domain — which the per-domain isolation rules above forbid.
+ * This guard keeps App\Support domain-neutral: if it ever imported App\Domain, the
+ * placement would no longer break the cycle and the isolation rules would silently
+ * be at risk. Mirrors the UNIGES DemoScope/DemoContext neutrality contract.
+ */
+arch('App\\Support never imports App\\Domain (the scope spine stays domain-neutral)')
+    ->expect('App\Support')
+    ->not->toUse('App\Domain');

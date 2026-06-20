@@ -22,6 +22,14 @@ uses(RefreshDatabase::class);
  *   2. the rendered public SHOW page HTML must contain no executable payload.
  * Both halves are asserted so neither the storage layer nor the render layer can
  * silently regress. Runs on PostgreSQL 18 via RefreshDatabase.
+ *
+ * SLICE-003 RETROFIT (§17 firewall): the store request runs through 'org.scope',
+ * which CONFINES the acting editor (null org here → fail-closed) for the rest of the
+ * request AND leaves that confinement on the per-request OrganizationContext
+ * singleton afterwards. So the post-request reads of the persisted row use
+ * withoutGlobalScopes() — the UNIGES pattern — to read the PHYSICAL article
+ * regardless of the leftover confinement. This is a read-mechanism change only; the
+ * sanitizer assertions are untouched.
  */
 
 /** A maliciously crafted TipTap document carrying every payload class. */
@@ -67,7 +75,7 @@ it('strips every dangerous token from the persisted DB row content', function ()
         ->assertSessionHasNoErrors();
 
     $persisted = json_encode(
-        Article::query()->where('title', 'XSS attempt')->sole()->content,
+        Article::query()->withoutGlobalScopes()->where('title', 'XSS attempt')->sole()->content,
         JSON_THROW_ON_ERROR,
     );
 
@@ -97,7 +105,7 @@ it('renders the public show page without any executable payload', function (): v
         ])
         ->assertRedirect();
 
-    $article = Article::query()->where('title', 'Public XSS attempt')->sole();
+    $article = Article::query()->withoutGlobalScopes()->where('title', 'Public XSS attempt')->sole();
 
     // Move it to a publicly-servable state (published).
     $article->forceFill([

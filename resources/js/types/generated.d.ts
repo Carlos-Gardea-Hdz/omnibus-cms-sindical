@@ -39,5 +39,43 @@ namespace Enums {
 export type UserRole = 'super_admin' | 'administrator' | 'manager' | 'editor';
 }
 }
+namespace Organization {
+namespace Data {
+export type BranchData = {
+organization_id: number,
+name: string,
+location: string,
+};
+export type DirectorData = {
+organization_id: number,
+first_name: string,
+last_name: string,
+photo: undefined | null,
+};
+export type MunicipalityData = {
+name: string,
+state: string,
+};
+export type OrganizationData = {
+name: string,
+municipality_id: number,
+registered_at: undefined,
+slug: string | null,
+logo: undefined | null,
+};
+export type RepresentativeData = {
+organization_id: number,
+branch_id: number,
+first_name: string,
+last_name: string,
+shift: App.Domain.Organization.Enums.RepresentativeShift,
+is_coordinator: boolean,
+photo: undefined | null,
+};
+}
+namespace Enums {
+export type RepresentativeShift = 'morning' | 'evening' | 'night';
+}
+}
 }
 }

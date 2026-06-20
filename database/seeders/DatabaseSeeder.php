@@ -17,7 +17,14 @@ final class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Organization structure first: municipalities are the FK target of
+        // organizations, and an org-dependent user/article needs an org to exist.
+        // Both run UNCONFINED (no org.scope in CLI) — the OrganizationScope is a
+        // no-op here.
+        $this->call([
+            MunicipalitySeeder::class,
+            OrganizationSeeder::class,
+        ]);
 
         User::factory()->create([
             'name' => 'Test User',

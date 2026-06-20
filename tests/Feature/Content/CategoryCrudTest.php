@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Content\Models\Article;
 use App\Domain\Content\Models\Category;
+use App\Domain\Organization\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -13,17 +14,32 @@ uses(RefreshDatabase::class);
 
 /*
  * Category catalog CRUD (CONTRACT §6/§7/§11.3, SPEC §3.3 CAT-01/CAT-02). Every
- * mutation runs end-to-end through the ['auth','role:editor'] route group on
- * PostgreSQL 18 (RefreshDatabase, never SQLite). Web validation surfaces as 302 +
- * session errors (the Spatie-Data-via-method-signature convention) — NEVER 422.
+ * mutation runs end-to-end through the ['auth','role:editor','org.scope'] route
+ * group on PostgreSQL 18 (RefreshDatabase, never SQLite). Web validation surfaces as
+ * 302 + session errors (the Spatie-Data-via-method-signature convention) — NEVER 422.
  * Deleting a category an Article still references must fail GRACEFULLY: 302 + the
  * CategoryInUseException 'category' error, the row preserved, NEVER a 500 (the
  * restrict FK is never tripped because the Action pre-checks).
+ *
+ * SLICE-003 RETROFIT (§17 firewall): the editor group now carries 'org.scope', and
+ * Category is a SHARED catalog (NOT org-scoped) so the slug/CRUD tests stand as-is.
+ * The ONE place confinement bites is the in-use pre-check — DeleteCategoryAction's
+ * `Article::where('category_id')->exists()` runs the (now globally org-scoped)
+ * Article query inside the confined editor's request. So the referencing-article
+ * fixtures in the two in-use tests are pinned to the editor's org (else a confined
+ * editor's scoped query would not see the article and would wrongly allow the
+ * delete). This proves the in-use guard fires WITHIN the acting editor's org.
  */
 
 function editor(): User
 {
     return User::factory()->editor()->create();
+}
+
+/** An editor confined to the given org (org.scope confines its Article queries). */
+function categoryOrgEditor(Organization $organization): User
+{
+    return User::factory()->editor()->forOrganization($organization)->create();
 }
 
 it('creates a category on the happy path, deriving the slug', function (): void {
@@ -117,10 +133,11 @@ it('deletes a category that nothing references', function (): void {
 });
 
 it('refuses to delete a category an article references (302, in-use error, row survives, NOT 500)', function (): void {
+    $org = Organization::factory()->createOne();
     $category = Category::factory()->create();
-    Article::factory()->create(['category_id' => $category->getKey()]);
+    Article::factory()->forOrganization($org)->create(['category_id' => $category->getKey()]);
 
-    actingAs(editor())
+    actingAs(categoryOrgEditor($org))
         ->delete(route('admin.categories.destroy', $category))
         ->assertRedirect()
         ->assertSessionHasErrors('category');
@@ -131,10 +148,11 @@ it('refuses to delete a category an article references (302, in-use error, row s
 });
 
 it('reports the in-use failure with the localized categories.error.in_use message', function (): void {
+    $org = Organization::factory()->createOne();
     $category = Category::factory()->create();
-    Article::factory()->create(['category_id' => $category->getKey()]);
+    Article::factory()->forOrganization($org)->create(['category_id' => $category->getKey()]);
 
-    actingAs(editor())
+    actingAs(categoryOrgEditor($org))
         ->delete(route('admin.categories.destroy', $category))
         ->assertRedirect()
         ->assertSessionHasErrors(['category' => __('categories.error.in_use')]);
