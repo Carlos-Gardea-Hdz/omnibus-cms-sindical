@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Content\Exceptions\CategoryInUseException;
 use App\Domain\Content\Exceptions\InvalidArticleTransitionException;
 use App\Domain\Jobs\Exceptions\InvalidJobTransitionException;
+use App\Domain\Membership\Exceptions\InvalidMemberTransitionException;
 use App\Domain\Organization\Exceptions\BranchHasRepresentativesException;
 use App\Domain\Organization\Exceptions\DirectorAlreadyAssignedException;
 use App\Domain\Organization\Exceptions\MunicipalityInUseException;
@@ -99,6 +100,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // 302 + a `status` field error on web (422 for JSON), never a 500. Mirrors the
         // Article transition render above.
         $exceptions->render(function (InvalidJobTransitionException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['status' => $e->getMessage()]);
+        });
+
+        // An illegal MemberStatus transition (e.g. approve/reject an already-terminal member) is a
+        // domain guard, not a server fault (SPEC §3.6 MEMBER-02 / slice-005 §6): surface it as the
+        // same graceful 302 + a `status` field error on web (422 for JSON), never a 500. Mirrors the
+        // Article / Job transition renders above.
+        $exceptions->render(function (InvalidMemberTransitionException $e, Request $request) {
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage()], 422)
                 : back()->withErrors(['status' => $e->getMessage()]);

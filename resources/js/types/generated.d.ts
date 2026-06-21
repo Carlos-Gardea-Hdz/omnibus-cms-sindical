@@ -39,6 +39,49 @@ namespace Enums {
 export type UserRole = 'super_admin' | 'administrator' | 'manager' | 'editor';
 }
 }
+namespace Jobs {
+namespace Data {
+export type CreateJobPostingData = {
+title: string,
+description: string,
+schedule: string,
+contact_info: string,
+organization_id: number,
+branch_id: number,
+salary_min_cents: number | null,
+salary_max_cents: number | null,
+salary_display: string | null,
+};
+export type ToggleJobStatusData = {
+status: App.Domain.Jobs.Enums.JobStatus,
+};
+}
+namespace Enums {
+export type JobStatus = 'draft' | 'active' | 'paused' | 'closed';
+}
+}
+namespace Membership {
+namespace Data {
+export type RegisterMemberData = {
+first_name: string,
+last_name_paternal: string,
+last_name_maternal: string,
+curp: string,
+rfc: string,
+date_of_birth: undefined,
+municipality_id: number,
+address: string,
+postal_code: string,
+neighborhood: string,
+mobile: string,
+phone: string | null,
+organization_id: number | null,
+};
+}
+namespace Enums {
+export type MemberStatus = 'pending' | 'approved' | 'rejected';
+}
+}
 namespace Organization {
 namespace Data {
 export type BranchData = {

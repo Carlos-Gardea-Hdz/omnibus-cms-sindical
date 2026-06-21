@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Domain\Jobs\Models\JobPosting;
+use App\Domain\Membership\Models\Member;
 use App\Domain\Organization\Models\Branch;
 use App\Domain\Organization\Models\Director;
 use App\Domain\Organization\Models\Municipality;
@@ -60,7 +61,16 @@ final class OrganizationSeeder extends Seeder
             $organization->forceFill(['director_id' => $director->getKey()])->save();
 
             $this->seedJobs($organization, $branches[0]);
+            $this->seedMembers($organization, $municipality);
         }
+
+        // One org-less applicant (organization_id NULL — the public-register / SET NULL
+        // case). A super_admin sees it; a confined manager never does.
+        Member::factory()
+            ->orgLess()
+            ->forMunicipality($municipalities[0])
+            ->pending()
+            ->create();
     }
 
     /**
@@ -94,5 +104,22 @@ final class OrganizationSeeder extends Seeder
         $factory->draft()->create(['title' => 'Coordinador de logística (borrador)']);
         $factory->paused()->create(['title' => 'Vigilante de turno nocturno (pausada)']);
         $factory->closed()->create(['title' => 'Promotor de afiliación (cerrada)']);
+    }
+
+    /**
+     * A few fictional demo members for an organization — one of each lifecycle status so
+     * the admin review UI has data to approve/reject. All PII is FICTIONAL (fake names,
+     * pattern-valid-but-fake CURP/RFC via the factory) — PII rules. The members share the
+     * organization's municipality so the catalog stays coherent.
+     */
+    private function seedMembers(Organization $organization, Municipality $municipality): void
+    {
+        $factory = Member::factory()
+            ->forOrganization($organization)
+            ->forMunicipality($municipality);
+
+        $factory->pending()->count(2)->create();
+        $factory->approved()->create();
+        $factory->rejected()->create();
     }
 }

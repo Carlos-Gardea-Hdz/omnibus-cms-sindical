@@ -173,6 +173,11 @@ arch('Organization domain only leans on Shared, Models, App\\Support and framewo
         // orphaned active job can't outlive its branch and 500 the public board).
         'App\Domain\Content\Models',
         'App\Domain\Jobs\Models',
+        // Slice-005 (Decision I): DeleteMunicipalityAction OR-checks a member referrer so
+        // a member-only municipality blocks the hard delete gracefully. This is a
+        // cross-domain MODEL reference (the in-use count target — Member), NOT a call into
+        // the Membership domain's Actions — mirrors the App\Domain\Jobs\Models edge above.
+        'App\Domain\Membership\Models',
         'Illuminate',
         // Carbon is the framework's date library (ships with Illuminate). OrganizationData
         // type-hints CarbonImmutable for the `registered_at` DATE field — the same clock
@@ -257,6 +262,61 @@ arch('Jobs data DTOs are final')
 
 arch('Jobs enums are string-backed')
     ->expect('App\Domain\Jobs\Enums')
+    ->toBeEnums()
+    ->toBeStringBackedEnums();
+
+/*
+ * Slice 005 — Membership domain (public union-member registration + the admin
+ * approve/reject review lifecycle). The cross-isolation rule is the load-bearing one:
+ * the Membership domain may lean only on Shared (the CurpFormat/RfcFormat/MexicanPhone
+ * PII rules live in App\Domain\Shared\Rules), the cross-domain Eloquent base model
+ * (App\Models — there is no acting-user argument, but the binding is symmetric with the
+ * prior domains), and the App\Support spine (Member adds the global OrganizationScope via
+ * booted()). Member belongsTo Organization (nullable, SET NULL) / Municipality (RESTRICT),
+ * so the Membership domain references the Organization MODELS directly — a cross-domain FK
+ * MODEL reference is ALLOWED; calling another domain's Actions/Services is NOT (only
+ * App\Domain\Organization\Models is whitelisted, never the whole namespace). It must never
+ * reach into HTTP or another domain's behaviour. RegisterMemberData type-hints
+ * CarbonImmutable for the `date_of_birth` field, so Carbon is an explicit edge (like the
+ * Organization DTO). Membership has no UploadedFile boundary (registration is plain text +
+ * scalars). __(), now() and request() are framework globals, not domain deps.
+ */
+
+arch('Membership domain only leans on Shared, Models, App\\Support and framework boundaries')
+    ->expect('App\Domain\Membership')
+    ->toOnlyUse([
+        'App\Domain\Shared',
+        'App\Models',
+        'App\Support',
+        // Cross-domain FK MODEL references are allowed (Member belongsTo Organization /
+        // Municipality). Organization Actions / Services remain forbidden — only \Models.
+        'App\Domain\Organization\Models',
+        'Illuminate',
+        // RegisterMemberData type-hints CarbonImmutable for date_of_birth — the same clock
+        // dependency surfaced as an explicit import (mirrors the Organization DTO edge).
+        'Carbon',
+        'Spatie\LaravelData',
+        'Spatie\TypeScriptTransformer',
+        'Database\Factories',
+    ])
+    ->ignoring(['__', 'now', 'request']);
+
+arch('the Membership domain never depends on HTTP')
+    ->expect('App\Domain\Membership')
+    ->not->toUse('Illuminate\Http');
+
+arch('Membership actions are final')
+    ->expect('App\Domain\Membership\Actions')
+    ->classes()
+    ->toBeFinal();
+
+arch('Membership data DTOs are final')
+    ->expect('App\Domain\Membership\Data')
+    ->classes()
+    ->toBeFinal();
+
+arch('Membership enums are string-backed')
+    ->expect('App\Domain\Membership\Enums')
     ->toBeEnums()
     ->toBeStringBackedEnums();
 

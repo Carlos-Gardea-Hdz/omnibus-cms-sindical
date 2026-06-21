@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DirectorController;
 use App\Http\Controllers\Admin\JobController;
+use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\MunicipalityController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\RepresentativeController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
 use App\Http\Controllers\Public\JobController as PublicJobController;
+use App\Http\Controllers\Public\MemberController as PublicMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
@@ -121,7 +123,8 @@ Route::middleware(['auth', 'role:administrator', 'org.scope'])->group(function (
         ->names('admin.directors');
 });
 
-// Org-scoped branches + representatives: manager and above, auto-confined by 'org.scope' (SPEC §7.4).
+// Org-scoped branches + representatives + membership review: manager and above, auto-confined by
+// 'org.scope' (SPEC §7.4, §7.3). An editor (a LOWER rung) hitting any of these is a 403.
 Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): void {
     Route::resource('admin/branches', BranchController::class)
         ->except(['show'])
@@ -130,6 +133,20 @@ Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): voi
     Route::resource('admin/representatives', RepresentativeController::class)
         ->except(['show'])
         ->names('admin.representatives');
+
+    /*
+     * Membership review (SPEC §3.6 MEMBER-02; §7.3, §10.2, §10.5 / slice-005 §8). Admin gets
+     * ONLY index + approve + reject — there is NO admin create / update / delete / edit (the SOLE
+     * create path is the PUBLIC registration endpoint below). Member is org-scoped, so 'org.scope'
+     * on this group auto-confines a manager: the review index filters to their own org and a
+     * cross-org route-model-bound {member} 404s (the write-isolation crown — a confined manager of
+     * org A can NEVER approve/reject an org-B member). The {member} is an implicit SCOPED binding;
+     * the scope is NOT bypassed on the admin path. The MemberStatus transition guard lives in the
+     * Action, not here. The review index never exposes curp / rfc (PII stays at rest, §10.5).
+     */
+    Route::get('/admin/members', [MemberController::class, 'index'])->name('admin.members.index');
+    Route::post('/admin/members/{member}/approve', [MemberController::class, 'approve'])->name('admin.members.approve');
+    Route::post('/admin/members/{member}/reject', [MemberController::class, 'reject'])->name('admin.members.reject');
 });
 
 /*
@@ -149,3 +166,18 @@ Route::get('/articles/{article}', [PublicArticleController::class, 'show'])->nam
  */
 Route::get('/jobs', [PublicJobController::class, 'index'])->name('jobs.index');
 Route::get('/jobs/{job}', [PublicJobController::class, 'show'])->name('jobs.show');
+
+/*
+ * Public union-membership registration (SPEC §3.6 MEMBER-01; §7.3, §10.5 / slice-005 §8). This is
+ * the SOLE create path for a member: ANONYMOUS and fully UNCONFINED — no 'auth', no 'org.scope', so
+ * EnsureOrganizationScope leaves the request UNCONFINED (the visitor carries no session
+ * confinement) and the municipality / organization pickers offer every option. A visitor submits
+ * their own PII via the RegisterMemberData DTO, so a bad field is 302 + session errors (never 422);
+ * the member always lands Pending + is_affiliated=false (the Action stamps those). The store route
+ * is rate-limited (5 submissions per 60 minutes) to blunt spam / abuse of the open endpoint — the
+ * GET form is not throttled. There is deliberately NO public member READ path (PII is admin-only).
+ */
+Route::get('/membership/register', [PublicMemberController::class, 'create'])->name('membership.create');
+Route::post('/membership/register', [PublicMemberController::class, 'store'])
+    ->middleware('throttle:5,60')
+    ->name('membership.store');
