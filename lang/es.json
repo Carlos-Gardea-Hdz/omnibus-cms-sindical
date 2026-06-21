@@ -72,5 +72,15 @@
     "job_status.closed": "Cerrada",
     "analytics.period.day": "Día",
     "analytics.period.week": "Semana",
-    "analytics.period.month": "Mes"
+    "analytics.period.month": "Mes",
+    "demo.throttled": "Has alcanzado el límite de inicios de sesión de demostración. Intenta de nuevo en una hora.",
+    "demo.expired": "Tu sesión de demostración expiró. Inicia una nueva cuando quieras.",
+    "demo.blocked": "Esta acción está deshabilitada en el modo de demostración.",
+    "users.created": "Usuario creado correctamente.",
+    "users.updated": "Usuario actualizado correctamente.",
+    "users.deleted": "Usuario eliminado correctamente.",
+    "users.error.cannot_delete_self": "No puedes eliminar tu propia cuenta.",
+    "users.error.cannot_delete_last_super_admin": "No puedes eliminar al único superadministrador.",
+    "users.error.cannot_assign_super_admin": "No tienes permiso para asignar el rol de superadministrador.",
+    "users.error.super_admin_self_only": "Solo el propio superadministrador puede editar esta cuenta."
 }

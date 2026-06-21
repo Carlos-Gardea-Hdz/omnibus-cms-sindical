@@ -72,5 +72,15 @@
     "job_status.closed": "Closed",
     "analytics.period.day": "Day",
     "analytics.period.week": "Week",
-    "analytics.period.month": "Month"
+    "analytics.period.month": "Month",
+    "demo.throttled": "You have reached the demo sign-in limit. Try again in an hour.",
+    "demo.expired": "Your demo session has expired. Start a new one whenever you like.",
+    "demo.blocked": "This action is disabled in demo mode.",
+    "users.created": "User created successfully.",
+    "users.updated": "User updated successfully.",
+    "users.deleted": "User deleted successfully.",
+    "users.error.cannot_delete_self": "You cannot delete your own account.",
+    "users.error.cannot_delete_last_super_admin": "You cannot delete the only super administrator.",
+    "users.error.cannot_assign_super_admin": "You are not allowed to assign the super administrator role.",
+    "users.error.super_admin_self_only": "Only the super administrator themselves can edit this account."
 }

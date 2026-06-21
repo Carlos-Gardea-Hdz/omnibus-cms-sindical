@@ -51,13 +51,41 @@ arch('Identity domain only leans on Shared, Models and framework boundaries')
     ->toOnlyUse([
         'App\Domain\Shared',
         'App\Models',
+        // Slice-008 (Identity Phase 2): ProvisionDemoSessionAction sets the request-scoped
+        // DemoContext (the cleanup-tag holder) — a domain-neutral App\Support spine class,
+        // exactly the org-scope spine the prior slices lean on. This is NOT a call into
+        // another DOMAIN; App\Support is forbidden from importing App\Domain (the guard at
+        // the bottom of this file), so the isolation direction stays intact.
+        // Slice-008 (Decision B): ProvisionDemoSessionAction resolves/creates the shared
+        // fictional "Demo Organization" (+ a Municipality for it) so a demo user is a real,
+        // org-confined member of it and the EXISTING OrganizationScope isolates the demo —
+        // no dedicated DemoScope. This is a cross-domain MODEL reference (the demo-org the
+        // demo user belongs to), NOT a call into another domain's ACTION, so the §11.2
+        // "never another domain's Actions" guarantee is preserved — the exact edge (and
+        // justification) the Content domain already whitelists for its org-scope retrofit.
+        'App\Domain\Organization\Models',
+        'App\Support',
         'Illuminate',
+        // Carbon is the framework's date library (ships with Illuminate). DemoCleanupAction
+        // type-hints CarbonInterface for its injectable TTL-cutoff clock (the typed twin of
+        // the `now` global) — the same framework edge the Organization/Membership domains
+        // already whitelist, not a domain or HTTP dependency.
+        'Carbon',
         'Spatie\LaravelData',
         'Spatie\TypeScriptTransformer',
+        // Slice-008: ProvisionDemoSessionAction mints an ephemeral demo user via
+        // User::factory()->demo(...) and DemoCleanupAction prunes them — the demo factory
+        // is test/seed infrastructure (mirrors the Content domain's Database\Factories edge),
+        // not a cross-domain or HTTP dependency.
+        'Database\Factories',
     ])
-    // The __() translation helper (the generic no-enumeration auth.failed message)
-    // is a framework global, not a domain dependency.
-    ->ignoring('__');
+    // __() (the generic no-enumeration auth.failed message + the demo flash keys), now()
+    // (the Carbon clock for the 30-min demo TTL + last_login stamps), Str (uuid7 demo
+    // session tags) and request() (the current-request accessor UpdateUserData::rules()
+    // uses for the unique-ignore-self id, exactly as every prior domain's Update DTO —
+    // a framework global, NOT a domain dependency; the no-HTTP guard below still holds
+    // because no Illuminate\Http symbol is imported) are framework globals.
+    ->ignoring(['__', 'now', 'Str', 'request']);
 
 arch('the Identity domain never depends on HTTP')
     ->expect('App\Domain\Identity')
@@ -77,6 +105,37 @@ arch('Identity enums are string-backed')
     ->expect('App\Domain\Identity\Enums')
     ->toBeEnums()
     ->toBeStringBackedEnums();
+
+/*
+ * Slice 008 — Identity Phase 2 (Demo login AUTH-02 + User CRUD AUTH-04). The new
+ * Identity classes (DemoPreset enum, DemoLoginData/UserData/UpdateUserData DTOs, the
+ * Provision/Cleanup/Create/Update/Delete Actions, the DemoSessionResult value object,
+ * the four user-CRUD exceptions) all live under App\Domain\Identity, so the broad
+ * isolation + final + string-backed-enum rules above already cover them. These pin the
+ * slice-specific guarantees the broad rules do not: the Identity ValueObjects + Exceptions
+ * are final, and the two new HTTP entry points stay anemic (no Request / DB facade — that
+ * lives in the universal App\Http\Controllers rule, asserted here per-class so a future
+ * narrowing cannot silently relax the demo/user controllers).
+ */
+
+arch('Identity value objects are final')
+    ->expect('App\Domain\Identity\ValueObjects')
+    ->classes()
+    ->toBeFinal();
+
+arch('Identity exceptions are final')
+    ->expect('App\Domain\Identity\Exceptions')
+    ->classes()
+    ->toBeFinal();
+
+arch('the user + demo controllers never touch Eloquent, the request, or the DB facade directly')
+    ->expect(['App\Http\Controllers\Admin\UserController', 'App\Http\Controllers\Auth\DemoLoginController'])
+    ->not->toUse([
+        'Illuminate\Support\Facades\DB',
+        'Illuminate\Http\Request',
+        'Illuminate\Database\Eloquent\Model',
+        'Illuminate\Foundation\Http\FormRequest',
+    ]);
 
 /*
  * Slice 002 — Content domain (Article + Category CRUD, the publication state

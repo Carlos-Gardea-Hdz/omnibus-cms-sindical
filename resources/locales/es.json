@@ -1,16 +1,12 @@
 {
     "app.name": "Corporate CMS",
-
     "nav.utilities": "utilidades",
     "nav.logout": "Cerrar sesión",
-
     "theme.light": "Claro",
     "theme.dark": "Oscuro",
     "theme.system": "Sistema",
     "theme.toggle": "Cambiar tema",
-
     "locale.toggle": "Cambiar idioma",
-
     "auth.login.title": "Iniciar sesión",
     "auth.login.subtitle": "Ingresa tus credenciales para acceder al panel de administración.",
     "auth.login.field.username": "Usuario",
@@ -18,17 +14,14 @@
     "auth.login.remember": "Mantener la sesión iniciada",
     "auth.login.submit": "Entrar",
     "auth.login.signing_in": "Iniciando sesión…",
-
     "admin.dashboard.title": "Panel",
     "admin.dashboard.greeting": "Hola",
     "admin.dashboard.subtitle": "Este es el panel de administración del CMS. Las secciones de contenido aparecerán aquí a medida que se construyan.",
     "admin.dashboard.shell_placeholder": "Aún no hay módulos disponibles. Pronto verás aquí las herramientas de gestión.",
-
     "role.super_admin": "Super administrador",
     "role.administrator": "Administrador",
     "role.manager": "Gerente",
     "role.editor": "Editor",
-
     "content.back": "Volver",
     "content.back_to_dashboard": "Volver al panel",
     "content.new": "Nuevo",
@@ -38,11 +31,9 @@
     "content.cancel": "Cancelar",
     "content.col.actions": "Acciones",
     "content.pagination": "Paginación",
-
     "article_status.draft": "Borrador",
     "article_status.published": "Publicado",
     "article_status.archived": "Archivado",
-
     "categories.title": "Categorías",
     "categories.subtitle": "Organiza las noticias por categoría. Una categoría con artículos no puede eliminarse.",
     "categories.subject": "categoría",
@@ -55,7 +46,6 @@
     "categories.field.description": "Descripción",
     "categories.delete.title": "Eliminar categoría",
     "categories.delete.confirm": "¿Eliminar «{name}»? Esta acción no se puede deshacer.",
-
     "articles.title": "Noticias",
     "articles.subtitle": "Crea, edita y gestiona el ciclo de vida de las noticias.",
     "articles.empty": "Aún no hay noticias. Crea la primera para verla aquí.",
@@ -81,7 +71,6 @@
     "articles.create.subtitle": "Redacta el contenido. Se guardará como borrador hasta que un gerente la publique.",
     "articles.edit.title": "Editar noticia",
     "articles.public.back_home": "Volver al inicio",
-
     "articles.field.title": "Título",
     "articles.field.subtitle": "Subtítulo",
     "articles.field.content": "Contenido",
@@ -98,7 +87,6 @@
     "articles.field.seo": "SEO (opcional)",
     "articles.field.meta_title": "Meta título",
     "articles.field.meta_description": "Meta descripción",
-
     "content.editor.toolbar": "Herramientas de formato",
     "content.editor.bold": "Negrita",
     "content.editor.italic": "Cursiva",
@@ -107,11 +95,9 @@
     "content.editor.ordered_list": "Lista numerada",
     "content.editor.link": "Insertar enlace",
     "content.editor.link_prompt": "Introduce la URL del enlace:",
-
     "representative_shift.morning": "Matutino",
     "representative_shift.evening": "Vespertino",
     "representative_shift.night": "Nocturno",
-
     "organizations.title": "Organizaciones",
     "organizations.subtitle": "Gestiona los sindicatos y sus datos. Una organización con sucursales no puede eliminarse.",
     "organizations.empty": "Aún no hay organizaciones. Crea la primera para empezar.",
@@ -141,7 +127,6 @@
     "organizations.director_none": "Sin asignar",
     "organizations.delete.title": "Eliminar organización",
     "organizations.delete.confirm": "¿Eliminar «{name}»? Se moverá a la papelera.",
-
     "branches.title": "Sucursales",
     "branches.subtitle": "Gestiona las sucursales de tu organización. Una sucursal con representantes no puede eliminarse.",
     "branches.empty": "Aún no hay sucursales. Crea la primera para empezar.",
@@ -162,7 +147,6 @@
     "branches.field.organization_placeholder": "Selecciona una organización…",
     "branches.delete.title": "Eliminar sucursal",
     "branches.delete.confirm": "¿Eliminar «{name}»? Sus noticias asociadas también se moverán a la papelera.",
-
     "directors.title": "Directores",
     "directors.subtitle": "Gestiona los directores. Cada organización tiene un único director.",
     "directors.empty": "Aún no hay directores. Crea el primero para empezar.",
@@ -187,7 +171,6 @@
     "directors.photo_none": "—",
     "directors.delete.title": "Eliminar director",
     "directors.delete.confirm": "¿Eliminar a «{name}»? Esta acción no se puede deshacer.",
-
     "representatives.title": "Representantes",
     "representatives.subtitle": "Gestiona los representantes por sucursal, turno y coordinación.",
     "representatives.empty": "Aún no hay representantes. Crea el primero para empezar.",
@@ -221,7 +204,6 @@
     "representatives.coordinator_no": "No",
     "representatives.delete.title": "Eliminar representante",
     "representatives.delete.confirm": "¿Eliminar a «{name}»? Esta acción no se puede deshacer.",
-
     "municipalities.title": "Municipios",
     "municipalities.subtitle": "Catálogo de municipios. Un municipio con organizaciones no puede eliminarse.",
     "municipalities.subject": "municipio",
@@ -234,12 +216,10 @@
     "municipalities.field.state": "Estado",
     "municipalities.delete.title": "Eliminar municipio",
     "municipalities.delete.confirm": "¿Eliminar «{name}»? Esta acción no se puede deshacer.",
-
     "job_status.draft": "Borrador",
     "job_status.active": "Activa",
     "job_status.paused": "Pausada",
     "job_status.closed": "Cerrada",
-
     "jobs.title": "Vacantes",
     "jobs.subtitle": "Crea, edita y gestiona el ciclo de vida de las vacantes de empleo.",
     "jobs.empty": "Aún no hay vacantes. Crea la primera para verla aquí.",
@@ -264,7 +244,6 @@
     "jobs.create.title": "Nueva vacante",
     "jobs.create.subtitle": "Registra una vacante. Se publica como activa y aparece de inmediato en el tablero público.",
     "jobs.edit.title": "Editar vacante",
-
     "jobs.field.organization": "Organización",
     "jobs.field.organization_placeholder": "Selecciona una organización…",
     "jobs.field.branch": "Sucursal",
@@ -281,18 +260,15 @@
     "jobs.field.salary_cents_hint": "Importe entero en centavos (p. ej. 1500000 = $15,000).",
     "jobs.field.salary_display": "Salario (texto público)",
     "jobs.field.salary_display_hint": "Cómo se muestra al público, p. ej. «$15,000 - $20,000 MXN».",
-
     "jobs.public.title": "Vacantes activas",
     "jobs.public.subtitle": "Explora las vacantes abiertas en todas nuestras organizaciones.",
     "jobs.public.empty": "No hay vacantes activas por ahora. Vuelve pronto.",
     "jobs.public.back_home": "Volver al inicio",
     "jobs.public.back_to_board": "Volver a vacantes",
     "jobs.public.how_to_apply": "Cómo postularte",
-
     "member_status.pending": "Pendiente",
     "member_status.approved": "Aprobado",
     "member_status.rejected": "Rechazado",
-
     "members.title": "Afiliaciones",
     "members.subtitle": "Revisa las solicitudes de afiliación y aprueba o rechaza cada una.",
     "members.empty": "Aún no hay solicitudes de afiliación. Aparecerán aquí cuando se reciban.",
@@ -309,7 +285,6 @@
     "members.action.reject": "Rechazar",
     "members.approve.confirm": "¿Aprobar la afiliación de «{name}»?",
     "members.reject.confirm": "¿Rechazar la afiliación de «{name}»?",
-
     "members.field.first_name": "Nombre(s)",
     "members.field.last_name_paternal": "Apellido paterno",
     "members.field.last_name_maternal": "Apellido materno",
@@ -332,7 +307,6 @@
     "members.field.organization": "Organización",
     "members.field.organization_placeholder": "Selecciona una organización…",
     "members.field.organization_hint": "Opcional. Puedes afiliarte sin elegir una organización.",
-
     "membership.register.title": "Afíliate al sindicato",
     "membership.register.subtitle": "Completa tus datos para enviar tu solicitud de afiliación. Un administrador la revisará.",
     "membership.register.back_home": "Volver al inicio",
@@ -340,7 +314,6 @@
     "membership.register.legend.contact": "Domicilio y contacto",
     "membership.register.legend.affiliation": "Afiliación",
     "membership.register.submit": "Enviar solicitud",
-
     "contact.title": "Contáctanos",
     "contact.subtitle": "¿Tienes dudas o comentarios? Escríbenos y nos pondremos en contacto contigo.",
     "contact.submit": "Enviar mensaje",
@@ -356,7 +329,6 @@
     "contact.field.branch_hint": "Selecciona primero una organización para filtrar las sucursales.",
     "contact.field.message": "Mensaje",
     "contact.field.message_hint": "Máximo 1000 caracteres.",
-
     "contact.admin.title": "Mensajes de contacto",
     "contact.admin.subtitle": "Revisa los mensajes enviados desde el formulario de contacto público.",
     "contact.admin.empty": "Aún no hay mensajes de contacto. Aparecerán aquí cuando se reciban.",
@@ -366,7 +338,6 @@
     "contact.col.branch": "Sucursal",
     "contact.col.message": "Mensaje",
     "contact.col.created_at": "Recibido",
-
     "analytics.title": "Analíticas",
     "analytics.subtitle": "Métricas agregadas de tu organización: vistas, vacantes, afiliaciones y mensajes.",
     "analytics.filter.label": "Filtros de analíticas",
@@ -392,5 +363,50 @@
     "analytics.top.title": "Artículos más vistos",
     "analytics.top.col.title": "Título",
     "analytics.top.col.views": "Vistas",
-    "analytics.top.empty": "Aún no hay vistas registradas."
+    "analytics.top.empty": "Aún no hay vistas registradas.",
+    "demo.banner.active": "Estás en modo demostración (solo lectura).",
+    "demo.banner.expires_in": "Expira en {time}",
+    "demo.cta.try": "Probar la demo",
+    "demo.cta.prompt": "¿Solo quieres echar un vistazo? Entra a una demostración de solo lectura.",
+    "demo.chooser.title": "Elige un perfil de demostración",
+    "demo.chooser.subtitle": "Explora el CMS durante 30 minutos con datos de muestra. La demo es de solo lectura: no se modifica información real.",
+    "demo.chooser.note": "Cada sesión de demostración dura 30 minutos y se reinicia automáticamente. Las acciones que modifican datos están deshabilitadas.",
+    "demo.chooser.back_to_login": "Volver a iniciar sesión",
+    "demo.preset.administrator.title": "Administrador",
+    "demo.preset.administrator.desc": "Gestiona usuarios, contenido y la organización con permisos amplios.",
+    "demo.preset.manager.title": "Coordinador",
+    "demo.preset.manager.desc": "Supervisa contenido, vacantes y afiliaciones de la organización.",
+    "demo.preset.editor.title": "Editor",
+    "demo.preset.editor.desc": "Crea y edita artículos y vacantes dentro de la organización.",
+    "admin.users.title": "Usuarios",
+    "admin.users.subtitle": "Administra las cuentas que pueden acceder al panel.",
+    "admin.users.new": "Nuevo usuario",
+    "admin.users.edit_title": "Editar usuario",
+    "admin.users.create.subtitle": "Crea una cuenta y asigna su rol.",
+    "admin.users.back_to_list": "Volver a usuarios",
+    "admin.users.empty": "Aún no hay usuarios para mostrar.",
+    "admin.users.filtered_org": "Mostrando usuarios de la organización seleccionada.",
+    "admin.users.submit": "Crear usuario",
+    "admin.users.save": "Guardar cambios",
+    "admin.users.col.username": "Usuario",
+    "admin.users.col.email": "Correo",
+    "admin.users.col.role": "Rol",
+    "admin.users.col.organization": "Organización",
+    "admin.users.col.last_login": "Último acceso",
+    "admin.users.field.username": "Nombre de usuario",
+    "admin.users.field.name": "Nombre",
+    "admin.users.field.email": "Correo electrónico",
+    "admin.users.field.password": "Contraseña",
+    "admin.users.field.password_confirmation": "Confirmar contraseña",
+    "admin.users.field.password_edit_hint": "Déjalo en blanco para conservar la contraseña actual.",
+    "admin.users.field.role": "Rol",
+    "admin.users.field.role_placeholder": "Selecciona un rol…",
+    "admin.users.field.organization": "Organización",
+    "admin.users.field.organization_placeholder": "Selecciona una organización…",
+    "admin.users.badge.demo": "Demo",
+    "admin.users.delete": "Eliminar",
+    "admin.users.delete.title": "Eliminar usuario",
+    "admin.users.confirm_delete": "¿Seguro que deseas eliminar a «{name}»? Esta acción se puede revertir.",
+    "admin.users.note.self": "Estás editando tu propia cuenta.",
+    "admin.users.note.only_super_admin": "Eres el único superadministrador: solo tú puedes editar esta cuenta y no puedes degradar tu propio rol."
 }

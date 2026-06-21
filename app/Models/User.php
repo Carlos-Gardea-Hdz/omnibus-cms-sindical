@@ -10,24 +10,30 @@ use App\Domain\Organization\Models\Organization;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
  * @property int $id
  * @property string $username
- * @property string $name
- * @property string $email
+ * @property string|null $name
+ * @property string|null $email
  * @property string $password
  * @property UserRole $role
  * @property bool $is_demo
  * @property int|null $organization_id
+ * @property string|null $avatar_path
+ * @property string|null $demo_session_id
+ * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property string|null $last_login_ip
+ * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read Organization|null $organization
  */
 final class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -42,6 +48,10 @@ final class User extends Authenticatable
         'role',
         'is_demo',
         'organization_id',
+        'avatar_path',
+        'demo_session_id',
+        'last_login_at',
+        'last_login_ip',
     ];
 
     /**
@@ -66,6 +76,8 @@ final class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_demo' => 'boolean',
+            'last_login_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 use App\Domain\Content\Exceptions\CategoryInUseException;
 use App\Domain\Content\Exceptions\InvalidArticleTransitionException;
+use App\Domain\Identity\Exceptions\CannotAssignSuperAdminException;
+use App\Domain\Identity\Exceptions\CannotDeleteLastSuperAdminException;
+use App\Domain\Identity\Exceptions\CannotDeleteSelfException;
+use App\Domain\Identity\Exceptions\SuperAdminSelfEditException;
 use App\Domain\Jobs\Exceptions\InvalidJobTransitionException;
 use App\Domain\Membership\Exceptions\InvalidMemberTransitionException;
 use App\Domain\Organization\Exceptions\BranchHasRepresentativesException;
@@ -49,6 +53,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => App\Http\Middleware\EnsureRole::class,
             'org.scope' => EnsureOrganizationScope::class,
+            // Demo-session lifecycle + write guard (slice-008 §A / Decision I). Applied to every
+            // admin group in routes/web.php (after `auth`, with `role`/`org.scope`): a no-op for a
+            // real session; for a demo session it enforces the 30-min TTL and blocks the destructive
+            // mutation route names with a graceful 302 + flash. It is also pinned in the priority
+            // list below so it runs AFTER EnsureRole+EnsureOrganizationScope, before route binding.
+            'demo' => App\Http\Middleware\DemoSessionMiddleware::class,
         ]);
 
         // CRITICAL ordering (the security spine, mirroring UNIGES DemoSessionMiddleware): both
@@ -72,6 +82,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(
             before: SubstituteBindings::class,
             prepend: EnsureOrganizationScope::class,
+        );
+        // DemoSessionMiddleware is prepended LAST, so it lands CLOSEST to SubstituteBindings —
+        // i.e. it runs AFTER EnsureRole and EnsureOrganizationScope (Decision I). The effect:
+        //   EnsureRole → EnsureOrganizationScope → DemoSessionMiddleware → SubstituteBindings.
+        // A wrong-ROLE demo user 403s in EnsureRole before the demo block fires; the per-request
+        // org context is already set; the demo TTL/destructive-block then runs before route-model
+        // binding, mirroring the UNIGES demo spine. It only ever sees an authenticated request
+        // (the admin groups carry `auth` ahead of the priority list) so the demo flags are present.
+        $middleware->prependToPriorityList(
+            before: SubstituteBindings::class,
+            prepend: App\Http\Middleware\DemoSessionMiddleware::class,
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -146,5 +167,42 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage()], 422)
                 : back()->withErrors(['director' => $e->getMessage()]);
+        });
+
+        // The four Identity user-CRUD guards (SPEC §3.1 AUTH-04 / slice-008): each is a
+        // privilege/integrity rule, not a server fault, so it surfaces as a graceful 302
+        // + error on web (422 JSON on API), never a 500 — exactly like the domain guards
+        // above. NO privilege escalation or account loss is ever persisted (the Actions
+        // throw as a pre-check, inside the transaction where applicable).
+
+        // A non-super_admin tried to assign/elevate to super_admin (no self-elevation): a
+        // `role` field error, mirroring the role select that never offered the option.
+        $exceptions->render(function (CannotAssignSuperAdminException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['role' => $e->getMessage()]);
+        });
+
+        // The super_admin own-record / no-self-demote guard (Decision C): a `role` field
+        // error (the role move only happens as the side-effect of promoting someone else).
+        $exceptions->render(function (SuperAdminSelfEditException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['role' => $e->getMessage()]);
+        });
+
+        // An actor tried to delete its OWN account (lock-out guard): a `user` flash error.
+        $exceptions->render(function (CannotDeleteSelfException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['user' => $e->getMessage()]);
+        });
+
+        // An attempt to delete the SOLE super_admin (the singleton must survive): a `user`
+        // flash error — the system always retains exactly one super_admin.
+        $exceptions->render(function (CannotDeleteLastSuperAdminException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->withErrors(['user' => $e->getMessage()]);
         });
     })->create();

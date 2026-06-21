@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { LocaleProvider } from '@/Contexts/LocaleContext';
@@ -22,6 +23,13 @@ const formState: FormState = { data: { username: '', password: '', remember: fal
 
 vi.mock('@inertiajs/react', () => ({
     Head: ({ title }: { title?: string }) => <title>{title}</title>,
+    // The login page links to the demo chooser via Inertia's <Link> (slice-008
+    // "Try a demo" CTA); mock it as a plain anchor so the page renders in isolation.
+    Link: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
+        <a href={href} {...rest}>
+            {children}
+        </a>
+    ),
     useForm: () => ({
         data: formState.data,
         setData: (key: string, value: unknown) => {

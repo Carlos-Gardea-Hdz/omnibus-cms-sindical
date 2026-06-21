@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { useId } from 'react';
 import { useLocale } from '@/Contexts/LocaleContext';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -131,6 +131,18 @@ export default function Login() {
                             ) : null}
                         </div>
                     </form>
+
+                    <div className="mt-8 border-t border-neutral-200/70 pt-6 dark:border-border-dark">
+                        <p className="text-sm text-neutral-600 dark:text-slate-400">
+                            {t('demo.cta.prompt')}
+                        </p>
+                        <Link
+                            href="/demo"
+                            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg border border-primary/40 px-6 font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none dark:text-primary-light"
+                        >
+                            {t('demo.cta.try')}
+                        </Link>
+                    </div>
                 </main>
             </div>
         </>

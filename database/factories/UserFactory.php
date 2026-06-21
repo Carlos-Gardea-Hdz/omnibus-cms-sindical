@@ -93,4 +93,21 @@ final class UserFactory extends Factory
             'organization_id' => $organization->getKey(),
         ]);
     }
+
+    /**
+     * An ephemeral demo user carrying the per-session isolation tag (slice-008).
+     * is_demo flips on, the deterministic obviously-fake email/name carry NO PII, and
+     * demo_session_id tags the row for the symmetric cleanup + (DemoCleanupAction's
+     * `whereNotNull('demo_session_id')` guard). The role/org are supplied by the
+     * caller (ProvisionDemoSessionAction) from the chosen DemoPreset + showcase org.
+     */
+    public function demo(string $sessionId): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_demo' => true,
+            'demo_session_id' => $sessionId,
+            'email' => 'demo+'.$sessionId.'@cms.demo',
+            'name' => 'Demo User',
+        ]);
+    }
 }

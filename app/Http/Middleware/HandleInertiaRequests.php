@@ -39,7 +39,31 @@ final class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            // The shared demo prop (slice-008 §D / CONTRACT §D): null for a real session,
+            // and { is_demo, expires_at } for a demo session — driving the demo banner. The
+            // server-only demo_session_id / preset token is NEVER shared (it must not reach
+            // the client). Snake_case per the project convention.
+            'demo' => $this->demoProp($request),
+        ];
+    }
+
+    /**
+     * The demo-session banner prop: null for a real session, else the public
+     * { is_demo, expires_at } shape (no server-only token ever exposed).
+     *
+     * @return array{is_demo: bool, expires_at: int|null}|null
+     */
+    private function demoProp(Request $request): ?array
+    {
+        if ($request->session()->get('is_demo') !== true) {
+            return null;
+        }
+
+        $expiresAt = $request->session()->get('demo_expires_at');
+
+        return [
+            'is_demo' => true,
+            'expires_at' => is_int($expiresAt) ? $expiresAt : null,
         ];
     }
 }

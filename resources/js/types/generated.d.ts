@@ -55,13 +55,33 @@ branch_id: number,
 }
 namespace Identity {
 namespace Data {
+export type DemoLoginData = {
+preset: App.Domain.Identity.Enums.DemoPreset,
+};
 export type LoginData = {
 username: string,
 password: string,
 remember: boolean,
 };
+export type UpdateUserData = {
+username: string,
+name: string | null,
+email: string | null,
+password: string | null,
+role: App.Domain.Identity.Enums.UserRole,
+organization_id: number | null,
+};
+export type UserData = {
+username: string,
+name: string | null,
+email: string | null,
+password: string,
+role: App.Domain.Identity.Enums.UserRole,
+organization_id: number | null,
+};
 }
 namespace Enums {
+export type DemoPreset = 'administrator' | 'manager' | 'editor';
 export type UserRole = 'super_admin' | 'administrator' | 'manager' | 'editor';
 }
 }

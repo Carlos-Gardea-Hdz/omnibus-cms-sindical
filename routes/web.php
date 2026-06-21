@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\MunicipalityController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\RepresentativeController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\DemoLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
@@ -42,6 +44,22 @@ Route::post('/logout', [LoginController::class, 'destroy'])
     ->name('logout');
 
 /*
+ * Demo mode (SPEC §3.1 AUTH-02 / slice-008 §A). A visitor picks a DemoPreset on the
+ * guest-facing chooser and is provisioned a throwaway, session-scoped sandbox via
+ * POST /demo-login. The chooser is anonymous (a CTA also lives on the login screen,
+ * Decision E); the POST is IP rate-limited (10/hour, AUTH-02) by the `demo-login`
+ * limiter registered in AppServiceProvider — a 10th-over hit is 302 + a `preset` error,
+ * no user minted. DemoLoginData (a DemoPreset enum-cast, NEVER super_admin) is the sole
+ * validation truth, so an out-of-set preset is 302 + `preset` error, never 422. The
+ * 30-minute TTL + the destructive-route block are enforced by the `demo` middleware
+ * applied to every admin group below.
+ */
+Route::get('/demo', [DemoLoginController::class, 'create'])->name('demo.create');
+Route::post('/demo-login', [DemoLoginController::class, 'store'])
+    ->middleware('throttle:demo-login')
+    ->name('demo.store');
+
+/*
  * Admin shell (SPEC §7.2, §10.2, §10.3). Gated 'auth' first (guests → 302 login), then the
  * level-based 'role' alias at the LOWEST rung ('role:editor') so all four roles reach the
  * dashboard this slice; an authenticated-but-under-level user is a 403. The 'org.scope'
@@ -50,7 +68,7 @@ Route::post('/logout', [LoginController::class, 'destroy'])
  * owns access). With it here, managers/editors auto-confine on /admin/articles* (and every
  * org-scoped model) without touching the Content controllers; the global scope does the work.
  */
-Route::middleware(['auth', 'role:editor', 'org.scope'])->group(function (): void {
+Route::middleware(['auth', 'role:editor', 'org.scope', 'demo'])->group(function (): void {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     /*
@@ -94,7 +112,7 @@ Route::middleware(['auth', 'role:editor', 'org.scope'])->group(function (): void
  * precondition (featured image + non-empty content) and the strict ArticleStatus
  * transition guard live in the Actions, not here.
  */
-Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): void {
+Route::middleware(['auth', 'role:manager', 'org.scope', 'demo'])->group(function (): void {
     Route::post('/admin/articles/{article}/publish', [ArticleController::class, 'publish'])->name('admin.articles.publish');
     Route::post('/admin/articles/{article}/archive', [ArticleController::class, 'archive'])->name('admin.articles.archive');
 });
@@ -108,14 +126,14 @@ Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): voi
  */
 
 // Organizations are the top-level tenant record: super_admin only (SPEC §7.3).
-Route::middleware(['auth', 'role:super_admin', 'org.scope'])->group(function (): void {
+Route::middleware(['auth', 'role:super_admin', 'org.scope', 'demo'])->group(function (): void {
     Route::resource('admin/organizations', OrganizationController::class)
         ->except(['show'])
         ->names('admin.organizations');
 });
 
 // Shared municipality catalog + per-org directors: administrator and above (SPEC §7.3).
-Route::middleware(['auth', 'role:administrator', 'org.scope'])->group(function (): void {
+Route::middleware(['auth', 'role:administrator', 'org.scope', 'demo'])->group(function (): void {
     Route::get('/admin/municipalities', [MunicipalityController::class, 'index'])->name('admin.municipalities.index');
     Route::post('/admin/municipalities', [MunicipalityController::class, 'store'])->name('admin.municipalities.store');
     Route::put('/admin/municipalities/{municipality}', [MunicipalityController::class, 'update'])->name('admin.municipalities.update');
@@ -135,11 +153,27 @@ Route::middleware(['auth', 'role:administrator', 'org.scope'])->group(function (
      * `/admin/analytics/export` is DEFERRED (§7.5).
      */
     Route::get('/admin/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics.index');
+
+    /*
+     * User administration (SPEC §3.1 AUTH-04 / slice-008 §B). Gated `role:administrator` so an
+     * editor/manager is a 403; the `demo` middleware on this group blocks a demo user on the write
+     * routes. The User model carries NO OrganizationScope (Deviation A — the login lookup runs
+     * before context), so `org.scope` here does NOT auto-confine the {user} binding: confinement
+     * is an EXPLICIT `where` in the controller (an administrator sees + reaches only own-org users,
+     * a super_admin runs cross-org), and a cross-org {user} 404s in the controller, not via a global
+     * scope. `show` is excluded (no per-user detail screen — index → create/edit only). The
+     * assignable-set check, the server-side org stamp for an administrator, the super_admin
+     * singleton swap, and the self-delete / last-super_admin / self-elevation guards live in the
+     * Actions; UserData/UpdateUserData are the sole validation truth (a bad field → 302, never 422).
+     */
+    Route::resource('admin/users', UserController::class)
+        ->except(['show'])
+        ->names('admin.users');
 });
 
 // Org-scoped branches + representatives + membership review: manager and above, auto-confined by
 // 'org.scope' (SPEC §7.4, §7.3). An editor (a LOWER rung) hitting any of these is a 403.
-Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): void {
+Route::middleware(['auth', 'role:manager', 'org.scope', 'demo'])->group(function (): void {
     Route::resource('admin/branches', BranchController::class)
         ->except(['show'])
         ->names('admin.branches');

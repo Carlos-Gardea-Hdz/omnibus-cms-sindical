@@ -1,16 +1,12 @@
 {
     "app.name": "Corporate CMS",
-
     "nav.utilities": "utilities",
     "nav.logout": "Sign out",
-
     "theme.light": "Light",
     "theme.dark": "Dark",
     "theme.system": "System",
     "theme.toggle": "Toggle theme",
-
     "locale.toggle": "Switch language",
-
     "auth.login.title": "Sign in",
     "auth.login.subtitle": "Enter your credentials to access the admin panel.",
     "auth.login.field.username": "Username",
@@ -18,17 +14,14 @@
     "auth.login.remember": "Keep me signed in",
     "auth.login.submit": "Sign in",
     "auth.login.signing_in": "Signing in…",
-
     "admin.dashboard.title": "Dashboard",
     "admin.dashboard.greeting": "Hello",
     "admin.dashboard.subtitle": "This is the CMS admin dashboard. Content sections will appear here as they are built.",
     "admin.dashboard.shell_placeholder": "No modules available yet. Management tools will appear here soon.",
-
     "role.super_admin": "Super administrator",
     "role.administrator": "Administrator",
     "role.manager": "Manager",
     "role.editor": "Editor",
-
     "content.back": "Back",
     "content.back_to_dashboard": "Back to dashboard",
     "content.new": "New",
@@ -38,11 +31,9 @@
     "content.cancel": "Cancel",
     "content.col.actions": "Actions",
     "content.pagination": "Pagination",
-
     "article_status.draft": "Draft",
     "article_status.published": "Published",
     "article_status.archived": "Archived",
-
     "categories.title": "Categories",
     "categories.subtitle": "Organize news by category. A category with articles cannot be deleted.",
     "categories.subject": "category",
@@ -55,7 +46,6 @@
     "categories.field.description": "Description",
     "categories.delete.title": "Delete category",
     "categories.delete.confirm": "Delete “{name}”? This cannot be undone.",
-
     "articles.title": "News",
     "articles.subtitle": "Create, edit and manage the article lifecycle.",
     "articles.empty": "No news yet. Create the first article to see it here.",
@@ -81,7 +71,6 @@
     "articles.create.subtitle": "Write the content. It is saved as a draft until a manager publishes it.",
     "articles.edit.title": "Edit article",
     "articles.public.back_home": "Back to home",
-
     "articles.field.title": "Title",
     "articles.field.subtitle": "Subtitle",
     "articles.field.content": "Content",
@@ -98,7 +87,6 @@
     "articles.field.seo": "SEO (optional)",
     "articles.field.meta_title": "Meta title",
     "articles.field.meta_description": "Meta description",
-
     "content.editor.toolbar": "Formatting tools",
     "content.editor.bold": "Bold",
     "content.editor.italic": "Italic",
@@ -107,11 +95,9 @@
     "content.editor.ordered_list": "Numbered list",
     "content.editor.link": "Insert link",
     "content.editor.link_prompt": "Enter the link URL:",
-
     "representative_shift.morning": "Morning",
     "representative_shift.evening": "Evening",
     "representative_shift.night": "Night",
-
     "organizations.title": "Organizations",
     "organizations.subtitle": "Manage unions and their details. An organization with branches cannot be deleted.",
     "organizations.empty": "No organizations yet. Create the first one to get started.",
@@ -141,7 +127,6 @@
     "organizations.director_none": "Unassigned",
     "organizations.delete.title": "Delete organization",
     "organizations.delete.confirm": "Delete “{name}”? It will be moved to the trash.",
-
     "branches.title": "Branches",
     "branches.subtitle": "Manage your organization's branches. A branch with representatives cannot be deleted.",
     "branches.empty": "No branches yet. Create the first one to get started.",
@@ -162,7 +147,6 @@
     "branches.field.organization_placeholder": "Select an organization…",
     "branches.delete.title": "Delete branch",
     "branches.delete.confirm": "Delete “{name}”? Its associated news will also be moved to the trash.",
-
     "directors.title": "Directors",
     "directors.subtitle": "Manage directors. Each organization has a single director.",
     "directors.empty": "No directors yet. Create the first one to get started.",
@@ -187,7 +171,6 @@
     "directors.photo_none": "—",
     "directors.delete.title": "Delete director",
     "directors.delete.confirm": "Delete “{name}”? This cannot be undone.",
-
     "representatives.title": "Representatives",
     "representatives.subtitle": "Manage representatives by branch, shift and coordination.",
     "representatives.empty": "No representatives yet. Create the first one to get started.",
@@ -221,7 +204,6 @@
     "representatives.coordinator_no": "No",
     "representatives.delete.title": "Delete representative",
     "representatives.delete.confirm": "Delete “{name}”? This cannot be undone.",
-
     "municipalities.title": "Municipalities",
     "municipalities.subtitle": "Municipality catalog. A municipality with organizations cannot be deleted.",
     "municipalities.subject": "municipality",
@@ -234,12 +216,10 @@
     "municipalities.field.state": "State",
     "municipalities.delete.title": "Delete municipality",
     "municipalities.delete.confirm": "Delete “{name}”? This cannot be undone.",
-
     "job_status.draft": "Draft",
     "job_status.active": "Active",
     "job_status.paused": "Paused",
     "job_status.closed": "Closed",
-
     "jobs.title": "Job postings",
     "jobs.subtitle": "Create, edit and manage the lifecycle of job postings.",
     "jobs.empty": "No job postings yet. Create the first one to see it here.",
@@ -264,7 +244,6 @@
     "jobs.create.title": "New posting",
     "jobs.create.subtitle": "Register a job posting. It goes live as active and appears immediately on the public board.",
     "jobs.edit.title": "Edit posting",
-
     "jobs.field.organization": "Organization",
     "jobs.field.organization_placeholder": "Select an organization…",
     "jobs.field.branch": "Branch",
@@ -281,18 +260,15 @@
     "jobs.field.salary_cents_hint": "Whole amount in cents (e.g. 1500000 = $15,000).",
     "jobs.field.salary_display": "Salary (public text)",
     "jobs.field.salary_display_hint": "How it shows to the public, e.g. “$15,000 - $20,000 MXN”.",
-
     "jobs.public.title": "Active openings",
     "jobs.public.subtitle": "Browse the open positions across all of our organizations.",
     "jobs.public.empty": "No active openings right now. Check back soon.",
     "jobs.public.back_home": "Back home",
     "jobs.public.back_to_board": "Back to openings",
     "jobs.public.how_to_apply": "How to apply",
-
     "member_status.pending": "Pending",
     "member_status.approved": "Approved",
     "member_status.rejected": "Rejected",
-
     "members.title": "Memberships",
     "members.subtitle": "Review membership applications and approve or reject each one.",
     "members.empty": "No membership applications yet. They will appear here as they come in.",
@@ -309,7 +285,6 @@
     "members.action.reject": "Reject",
     "members.approve.confirm": "Approve the membership of “{name}”?",
     "members.reject.confirm": "Reject the membership of “{name}”?",
-
     "members.field.first_name": "First name(s)",
     "members.field.last_name_paternal": "Paternal last name",
     "members.field.last_name_maternal": "Maternal last name",
@@ -332,7 +307,6 @@
     "members.field.organization": "Organization",
     "members.field.organization_placeholder": "Select an organization…",
     "members.field.organization_hint": "Optional. You can apply without choosing an organization.",
-
     "membership.register.title": "Join the union",
     "membership.register.subtitle": "Fill in your details to submit your membership application. An administrator will review it.",
     "membership.register.back_home": "Back home",
@@ -340,7 +314,6 @@
     "membership.register.legend.contact": "Address and contact",
     "membership.register.legend.affiliation": "Affiliation",
     "membership.register.submit": "Submit application",
-
     "contact.title": "Contact us",
     "contact.subtitle": "Have a question or comment? Write to us and we will get back to you.",
     "contact.submit": "Send message",
@@ -356,7 +329,6 @@
     "contact.field.branch_hint": "Select an organization first to filter the branches.",
     "contact.field.message": "Message",
     "contact.field.message_hint": "Maximum 1000 characters.",
-
     "contact.admin.title": "Contact messages",
     "contact.admin.subtitle": "Review the messages submitted through the public contact form.",
     "contact.admin.empty": "No contact messages yet. They will appear here as they come in.",
@@ -366,7 +338,6 @@
     "contact.col.branch": "Branch",
     "contact.col.message": "Message",
     "contact.col.created_at": "Received",
-
     "analytics.title": "Analytics",
     "analytics.subtitle": "Aggregate metrics for your organization: views, jobs, memberships, and messages.",
     "analytics.filter.label": "Analytics filters",
@@ -392,5 +363,50 @@
     "analytics.top.title": "Most viewed articles",
     "analytics.top.col.title": "Title",
     "analytics.top.col.views": "Views",
-    "analytics.top.empty": "No views recorded yet."
+    "analytics.top.empty": "No views recorded yet.",
+    "demo.banner.active": "You are in demo mode (read-only).",
+    "demo.banner.expires_in": "Expires in {time}",
+    "demo.cta.try": "Try the demo",
+    "demo.cta.prompt": "Just want to look around? Enter a read-only demo.",
+    "demo.chooser.title": "Choose a demo profile",
+    "demo.chooser.subtitle": "Explore the CMS for 30 minutes with sample data. The demo is read-only: no real information is changed.",
+    "demo.chooser.note": "Each demo session lasts 30 minutes and resets automatically. Actions that change data are disabled.",
+    "demo.chooser.back_to_login": "Back to sign in",
+    "demo.preset.administrator.title": "Administrator",
+    "demo.preset.administrator.desc": "Manage users, content and the organization with broad permissions.",
+    "demo.preset.manager.title": "Manager",
+    "demo.preset.manager.desc": "Oversee content, job postings and memberships for the organization.",
+    "demo.preset.editor.title": "Editor",
+    "demo.preset.editor.desc": "Create and edit articles and job postings within the organization.",
+    "admin.users.title": "Users",
+    "admin.users.subtitle": "Manage the accounts that can access the panel.",
+    "admin.users.new": "New user",
+    "admin.users.edit_title": "Edit user",
+    "admin.users.create.subtitle": "Create an account and assign its role.",
+    "admin.users.back_to_list": "Back to users",
+    "admin.users.empty": "No users to show yet.",
+    "admin.users.filtered_org": "Showing users for the selected organization.",
+    "admin.users.submit": "Create user",
+    "admin.users.save": "Save changes",
+    "admin.users.col.username": "Username",
+    "admin.users.col.email": "Email",
+    "admin.users.col.role": "Role",
+    "admin.users.col.organization": "Organization",
+    "admin.users.col.last_login": "Last sign in",
+    "admin.users.field.username": "Username",
+    "admin.users.field.name": "Name",
+    "admin.users.field.email": "Email address",
+    "admin.users.field.password": "Password",
+    "admin.users.field.password_confirmation": "Confirm password",
+    "admin.users.field.password_edit_hint": "Leave blank to keep the current password.",
+    "admin.users.field.role": "Role",
+    "admin.users.field.role_placeholder": "Select a role…",
+    "admin.users.field.organization": "Organization",
+    "admin.users.field.organization_placeholder": "Select an organization…",
+    "admin.users.badge.demo": "Demo",
+    "admin.users.delete": "Delete",
+    "admin.users.delete.title": "Delete user",
+    "admin.users.confirm_delete": "Are you sure you want to delete “{name}”? This action can be reverted.",
+    "admin.users.note.self": "You are editing your own account.",
+    "admin.users.note.only_super_admin": "You are the only super administrator: only you can edit this account and you cannot demote your own role."
 }
