@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Engagement\Models\ContactMessage;
+use App\Domain\Identity\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,16 +27,30 @@ use Inertia\Response;
  * PII boundary (SPEC §10.5): the inbox read model DOES surface email + phone — replying to a
  * message is its whole purpose, and the data is org-scoped to the manager's own organization,
  * so this is a deliberate authorized read, not a leak. The plain-text `message` is rendered as
- * escaped text in React (never `dangerouslySetInnerHTML`). The optional `?organization_id=`
- * filter narrows an UNCONFINED admin to one org; a confined manager is already scoped, so the
- * filter is a no-op for them. The actor is never read via `Illuminate\Http\Request` (controller
- * arch law); the optional filter uses the `request()` helper only.
+ * escaped text in React (never `dangerouslySetInnerHTML`). The actor is never read via
+ * `Illuminate\Http\Request` (controller arch law); the resolution uses the `request()` helper only.
+ *
+ * ORG ISOLATION (defense-in-depth, mirrors AnalyticsController/UserController): only a super_admin
+ * is cross-org and may narrow via the optional `?organization_id=` filter (null = every org). A
+ * non-super_admin administrator — own-org by design (§10.2 RBAC matrix) — is PINNED to its own org
+ * (it cannot override the confinement via the query string), or it would otherwise run UNCONFINED
+ * and read every org's contact PII (email/phone). A manager is already confined by the global
+ * scope, so pinning its own org is a harmless no-op.
  */
 final class ContactController extends Controller
 {
     public function index(): Response
     {
-        $organizationId = request()->integer('organization_id') ?: null;
+        $actor = request()->user();
+        $isSuperAdmin = $actor instanceof User && $actor->role === UserRole::SuperAdmin;
+
+        // A non-super_admin administrator is PINNED to its own org (it cannot override the
+        // confinement via ?organization_id); a super_admin may narrow to one org via the
+        // optional filter (null = every org). A manager is already confined by the global
+        // scope, so its own-org id is a harmless no-op narrowing.
+        $organizationId = $isSuperAdmin
+            ? (request()->integer('organization_id') ?: null)
+            : ($actor instanceof User ? $actor->organization_id : null);
 
         $messages = ContactMessage::query()
             ->with(['branch:id,name'])

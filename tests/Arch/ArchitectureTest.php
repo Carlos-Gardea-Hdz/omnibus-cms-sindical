@@ -237,6 +237,16 @@ arch('Organization domain only leans on Shared, Models, App\\Support and framewo
         // cross-domain MODEL reference (the in-use count target — Member), NOT a call into
         // the Membership domain's Actions — mirrors the App\Domain\Jobs\Models edge above.
         'App\Domain\Membership\Models',
+        // BLOCKER-2 (ORG-01 completeness): DeleteOrganizationAction OR-checks EVERY restrict
+        // referrer before it deletes — so an org with directors/users/articles/jobs/contact-
+        // messages/page-views/daily-snapshots (but no branches) is refused gracefully (302)
+        // instead of tripping the FK and 500ing. The new edges are the two referrer domains
+        // not yet whitelisted: Engagement (ContactMessage) and Analytics (PageView,
+        // DailySnapshot). These are cross-domain MODEL references (the in-use referrer scopes),
+        // NOT calls into those domains' Actions — mirrors the Content/Jobs/Membership edges
+        // above. App\Models\User is already whitelisted (the users restrict referrer).
+        'App\Domain\Engagement\Models',
+        'App\Domain\Analytics\Models',
         'Illuminate',
         // Carbon is the framework's date library (ships with Illuminate). OrganizationData
         // type-hints CarbonImmutable for the `registered_at` DATE field — the same clock

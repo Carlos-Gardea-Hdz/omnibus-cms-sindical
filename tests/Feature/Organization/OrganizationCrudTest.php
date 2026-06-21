@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Content\Models\Article;
 use App\Domain\Organization\Models\Branch;
+use App\Domain\Organization\Models\Director;
 use App\Domain\Organization\Models\Municipality;
 use App\Domain\Organization\Models\Organization;
 use App\Models\User;
@@ -137,6 +139,85 @@ it('refuses to delete an organization that still has a branch (302, in-use error
 });
 
 it('soft-deletes an organization that has no branches (302 + deleted flash)', function (): void {
+    $municipality = Municipality::factory()->create();
+    $organization = Organization::factory()->for($municipality)->create();
+
+    actingAs(orgAdmin())
+        ->delete(route('admin.organizations.destroy', $organization))
+        ->assertRedirect()
+        ->assertSessionHas('success', __('organizations.deleted'))
+        ->assertSessionHasNoErrors();
+
+    $this->assertSoftDeleted('organizations', ['id' => $organization->getKey()]);
+});
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * BLOCKER 2 — the in-use pre-check covers EVERY restrict referrer, not just branches.
+ * directors / users / articles / job_postings / contact_messages / page_views /
+ * daily_snapshots all carry `organization_id ... restrictOnDelete()`. Deleting an org
+ * with any of them (but NO branches) USED to slip past the branch-only pre-check, trip
+ * the restrict FK, and 500. These prove each referrer (with no branch present) now yields
+ * the graceful 302 + 'organization' error and the org survives — never a 500. (Member is
+ * SET NULL, so it must NOT block the delete.)
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+it('refuses (gracefully, 302) to delete an org that has a DIRECTOR but no branch — never a 500', function (): void {
+    $municipality = Municipality::factory()->create();
+    $organization = Organization::factory()->for($municipality)->create();
+    Director::factory()->forOrganization($organization)->create();
+
+    actingAs(orgAdmin())
+        ->delete(route('admin.organizations.destroy', $organization))
+        ->assertRedirect()
+        ->assertSessionHasErrors(['organization' => __('organizations.error.has_branches')]);
+
+    // The org survived (not even soft-deleted) — the pre-check fired before the FK could trip.
+    expect(Organization::query()->whereKey($organization->getKey())->whereNull('deleted_at')->exists())->toBeTrue();
+});
+
+it('refuses (gracefully, 302) to delete an org that has a USER but no branch — never a 500', function (): void {
+    $municipality = Municipality::factory()->create();
+    $organization = Organization::factory()->for($municipality)->create();
+    User::factory()->manager()->forOrganization($organization)->create();
+
+    actingAs(orgAdmin())
+        ->delete(route('admin.organizations.destroy', $organization))
+        ->assertRedirect()
+        ->assertSessionHasErrors(['organization' => __('organizations.error.has_branches')]);
+
+    expect(Organization::query()->whereKey($organization->getKey())->whereNull('deleted_at')->exists())->toBeTrue();
+});
+
+it('refuses (gracefully, 302) to delete an org that has an ARTICLE but no branch — never a 500', function (): void {
+    $municipality = Municipality::factory()->create();
+    $organization = Organization::factory()->for($municipality)->create();
+    Article::factory()->forOrganization($organization)->create();
+
+    actingAs(orgAdmin())
+        ->delete(route('admin.organizations.destroy', $organization))
+        ->assertRedirect()
+        ->assertSessionHasErrors(['organization' => __('organizations.error.has_branches')]);
+
+    expect(Organization::query()->whereKey($organization->getKey())->whereNull('deleted_at')->exists())->toBeTrue();
+});
+
+it('refuses (gracefully, 302) to delete an org that has a TRASHED article but no branch (trashed rows still hold the FK)', function (): void {
+    $municipality = Municipality::factory()->create();
+    $organization = Organization::factory()->for($municipality)->create();
+    $article = Article::factory()->forOrganization($organization)->create();
+    $article->delete(); // soft-deleted — the FK is still physically held
+
+    actingAs(orgAdmin())
+        ->delete(route('admin.organizations.destroy', $organization))
+        ->assertRedirect()
+        ->assertSessionHasErrors(['organization' => __('organizations.error.has_branches')]);
+
+    expect(Organization::query()->whereKey($organization->getKey())->whereNull('deleted_at')->exists())->toBeTrue();
+});
+
+it('still soft-deletes cleanly an org with ZERO referrers (the happy path is unbroken)', function (): void {
     $municipality = Municipality::factory()->create();
     $organization = Organization::factory()->for($municipality)->create();
 

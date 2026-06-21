@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Identity\Enums\UserRole;
 use App\Domain\Organization\Actions\CreateDirectorAction;
 use App\Domain\Organization\Actions\DeleteDirectorAction;
 use App\Domain\Organization\Actions\UpdateDirectorAction;
@@ -11,6 +12,7 @@ use App\Domain\Organization\Data\DirectorData;
 use App\Domain\Organization\Models\Director;
 use App\Domain\Organization\Models\Organization;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -19,8 +21,13 @@ use Inertia\Response;
 /**
  * Director CRUD (SPEC §3.2, §7.3 / slice-003 §9). Exactly one director per organization
  * (a unique FK), wired onto `organizations.director_id` by the Actions. Gated
- * `role:administrator` upstream in routes/web.php — admin+ runs UNCONFINED, so the
- * org-scoped Director listing here spans every organization.
+ * `role:administrator` upstream in routes/web.php.
+ *
+ * ORG ISOLATION (defense-in-depth, mirrors AnalyticsController/UserController): admin+
+ * runs UNCONFINED through the global scope, so the index applies an EXPLICIT own-org
+ * `where` for any non-super_admin actor — an administrator is own-org by design (the
+ * §10.2 RBAC matrix: administrator = own-org, super_admin = all), so it sees only its own
+ * org's director; a super_admin alone spans every organization.
  *
  * Anemic by law: each mutation hands a validated {@see DirectorData} (resolved via the
  * method signature → web failure is 302 + session errors, never 422) to its Action,
@@ -33,7 +40,13 @@ final class DirectorController extends Controller
 {
     public function index(): Response
     {
+        $actor = request()->user();
+        $ownOrgId = $actor instanceof User && $actor->role !== UserRole::SuperAdmin
+            ? $actor->organization_id
+            : null;
+
         $directors = Director::query()
+            ->when($ownOrgId !== null, fn ($query) => $query->where('organization_id', $ownOrgId))
             ->with('organization:id,name')
             ->orderBy('last_name')
             ->orderBy('first_name')

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Identity\Enums\UserRole;
 use App\Domain\Organization\Actions\CreateBranchAction;
 use App\Domain\Organization\Actions\DeleteBranchAction;
 use App\Domain\Organization\Actions\UpdateBranchAction;
@@ -11,6 +12,7 @@ use App\Domain\Organization\Data\BranchData;
 use App\Domain\Organization\Models\Branch;
 use App\Domain\Organization\Models\Organization;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,6 +23,13 @@ use Inertia\Response;
  * `org.scope` middleware — a confined manager sees ONLY their org's branches (no manual
  * `where`), and a cross-org route-model-bound branch is unresolvable → 404. Gated
  * `role:manager` upstream in routes/web.php.
+ *
+ * ORG ISOLATION (defense-in-depth, mirrors AnalyticsController/UserController): an
+ * administrator runs UNCONFINED through the global scope, so the index ALSO applies an
+ * EXPLICIT own-org `where` for any non-super_admin actor. An administrator is own-org by
+ * design (the §10.2 RBAC matrix: administrator = own-org, super_admin = all), so it sees
+ * only its own org's branches; a super_admin alone sees every org. A manager/editor is
+ * already confined by the global scope, so the explicit filter is a harmless no-op for it.
  *
  * Anemic by law: each mutation hands a validated {@see BranchData} (resolved via the
  * method signature → web failure is 302 + session errors, never 422) to its Action. The
@@ -34,7 +43,13 @@ final class BranchController extends Controller
 {
     public function index(): Response
     {
+        $actor = request()->user();
+        $ownOrgId = $actor instanceof User && $actor->role !== UserRole::SuperAdmin
+            ? $actor->organization_id
+            : null;
+
         $branches = Branch::query()
+            ->when($ownOrgId !== null, fn ($query) => $query->where('organization_id', $ownOrgId))
             ->with('organization:id,name')
             ->withCount('representatives')
             ->orderBy('name')

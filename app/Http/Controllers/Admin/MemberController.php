@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Identity\Enums\UserRole;
 use App\Domain\Membership\Actions\ApproveMemberAction;
 use App\Domain\Membership\Actions\RejectMemberAction;
 use App\Domain\Membership\Enums\MemberStatus;
 use App\Domain\Membership\Models\Member;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,15 +37,32 @@ use Inertia\Response;
  * composed full_name, the municipality name, the status, the affiliation flag and the timestamp.
  * The encrypted PII columns stay at rest, out of the prop contract. The actor is never read via
  * `Illuminate\Http\Request` (controller arch law); the index status filter uses the `request()`
- * helper only.
+ * helper only. The status filter is validated against {@see MemberStatus} (the enum SSOT) via
+ * tryFrom: a junk ?status is IGNORED (treated as no filter), never a raw string compared against
+ * the column (which would silently return an empty set).
+ *
+ * ORG ISOLATION (defense-in-depth, mirrors AnalyticsController/UserController): the review index
+ * ALSO applies an EXPLICIT own-org `where` for any non-super_admin actor. A manager is already
+ * confined by the global scope (a no-op for it); an administrator — own-org by design (§10.2 RBAC
+ * matrix) — would otherwise run UNCONFINED and read every org's member PII, so the explicit filter
+ * pins it to its own org. A super_admin alone sees every org's members.
  */
 final class MemberController extends Controller
 {
     public function index(): Response
     {
-        $status = request()->string('status')->toString() ?: null;
+        // The status filter is validated against MemberStatus (the SSOT): an out-of-enum
+        // ?status is IGNORED (tryFrom → null), so a junk value behaves as "no filter"
+        // rather than silently producing an empty result set on a raw string compare.
+        $status = MemberStatus::tryFrom(request()->string('status')->toString());
+
+        $actor = request()->user();
+        $ownOrgId = $actor instanceof User && $actor->role !== UserRole::SuperAdmin
+            ? $actor->organization_id
+            : null;
 
         $members = Member::query()
+            ->when($ownOrgId !== null, fn ($query) => $query->where('organization_id', $ownOrgId))
             ->with(['municipality:id,name'])
             ->when($status !== null, fn ($query) => $query->where('status', $status))
             ->latest('id')
@@ -62,7 +81,7 @@ final class MemberController extends Controller
                 ],
             ],
             'statuses' => $this->statusOptions(),
-            'filters' => ['status' => $status],
+            'filters' => ['status' => $status?->value],
         ]);
     }
 
