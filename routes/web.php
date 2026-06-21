@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DirectorController;
 use App\Http\Controllers\Admin\JobController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\Admin\RepresentativeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Public\ArticleController as PublicArticleController;
+use App\Http\Controllers\Public\ContactController as PublicContactController;
 use App\Http\Controllers\Public\JobController as PublicJobController;
 use App\Http\Controllers\Public\MemberController as PublicMemberController;
 use Illuminate\Support\Facades\Route;
@@ -121,6 +124,17 @@ Route::middleware(['auth', 'role:administrator', 'org.scope'])->group(function (
     Route::resource('admin/directors', DirectorController::class)
         ->except(['show'])
         ->names('admin.directors');
+
+    /*
+     * Analytics dashboard (SPEC §3.7 ANALYTICS-01/02/03, §7.5, §10.2 / slice-007 §9). READ-ONLY,
+     * index ONLY. The §10.2 RBAC matrix governs the gate: administrator = own-org, super_admin =
+     * all — so it rides THIS `role:administrator` group. An editor or a MANAGER (lower rungs) is a
+     * 403. `org.scope` confines the (already-403'd) lower actors and auto-filters the org-scoped
+     * metric models; an administrator runs unconfined (narrowable via `?organization_id=`). There
+     * is NO public Analytics route — page-view tracking rides the existing GET /articles/{article}.
+     * `/admin/analytics/export` is DEFERRED (§7.5).
+     */
+    Route::get('/admin/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics.index');
 });
 
 // Org-scoped branches + representatives + membership review: manager and above, auto-confined by
@@ -147,6 +161,17 @@ Route::middleware(['auth', 'role:manager', 'org.scope'])->group(function (): voi
     Route::get('/admin/members', [MemberController::class, 'index'])->name('admin.members.index');
     Route::post('/admin/members/{member}/approve', [MemberController::class, 'approve'])->name('admin.members.approve');
     Route::post('/admin/members/{member}/reject', [MemberController::class, 'reject'])->name('admin.members.reject');
+
+    /*
+     * Contact inbox (SPEC §3.5, §6.3.11, §7.2, §10.2, §10.5 / slice-006 §6). Admin gets ONLY a
+     * read-only index — there is NO create / update / delete / moderation (a contact message has
+     * no status and no deleted_at; it is a permanent audit record, §6.4). The SOLE create path is
+     * the PUBLIC /contact endpoint below. ContactMessage is org-scoped, so 'org.scope' on this
+     * group auto-confines a manager: the inbox filters to their own org's messages (the read-
+     * isolation crown — a confined manager of org A can NEVER see an org-B message). The inbox
+     * surfaces email + phone (replying is the point, scoped to the org), never on a public path.
+     */
+    Route::get('/admin/contacts', [ContactController::class, 'index'])->name('admin.contacts.index');
 });
 
 /*
@@ -181,3 +206,20 @@ Route::get('/membership/register', [PublicMemberController::class, 'create'])->n
 Route::post('/membership/register', [PublicMemberController::class, 'store'])
     ->middleware('throttle:5,60')
     ->name('membership.store');
+
+/*
+ * Public contact-message submission (SPEC §3.5, §6.3.11, §10.4 / slice-006 §6). This is the SOLE
+ * create path for a contact message: ANONYMOUS and fully UNCONFINED — no 'auth', no 'org.scope',
+ * so EnsureOrganizationScope leaves the request UNCONFINED (the visitor carries no session
+ * confinement). There is NO GET /contact page — the form is an Inertia COMPONENT embedded in the
+ * landing/footer (SPEC §8.3 / Decision G), so only the store route exists here. A visitor submits
+ * their data via the SubmitContactData DTO, so a bad field is 302 + session errors (never 422).
+ * Both organization_id AND branch_id come from the payload; the Action asserts the branch belongs
+ * to the org (a mismatch is a graceful 302 + branch_id error, never a 500). The store route is
+ * rate-limited (3 submissions per 15 minutes) — the throttle IS the §10.4 abuse control (no
+ * CAPTCHA); CSRF ships with the web group. There is deliberately NO public READ path (the sender
+ * PII — name, email, phone — is admin-only, §10.5).
+ */
+Route::post('/contact', [PublicContactController::class, 'store'])
+    ->middleware('throttle:3,15')
+    ->name('contact.store');

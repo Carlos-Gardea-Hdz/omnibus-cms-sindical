@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Engagement\Models\ContactMessage;
 use App\Domain\Jobs\Models\JobPosting;
 use App\Domain\Membership\Models\Member;
 use App\Domain\Organization\Models\Branch;
@@ -62,6 +63,7 @@ final class OrganizationSeeder extends Seeder
 
             $this->seedJobs($organization, $branches[0]);
             $this->seedMembers($organization, $municipality);
+            $this->seedContactMessages($branches[0]);
         }
 
         // One org-less applicant (organization_id NULL — the public-register / SET NULL
@@ -121,5 +123,20 @@ final class OrganizationSeeder extends Seeder
         $factory->pending()->count(2)->create();
         $factory->approved()->create();
         $factory->rejected()->create();
+    }
+
+    /**
+     * A few fictional demo contact messages for an organization's first branch so the
+     * org-scoped admin inbox has data. The org/branch pairing is coherent (the branch
+     * belongs to the organization, the invariant the Submit Action asserts). All contact
+     * data is FICTIONAL (fake names/email/phone/message via the factory) — PII rules. A
+     * contact message has no status (it is its own terminal state) — nothing to vary.
+     */
+    private function seedContactMessages(Branch $branch): void
+    {
+        ContactMessage::factory()
+            ->forBranch($branch)
+            ->count(3)
+            ->create();
     }
 }

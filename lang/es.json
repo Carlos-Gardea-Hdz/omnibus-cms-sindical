@@ -55,6 +55,8 @@
     "members.approved": "Miembro aprobado correctamente.",
     "members.rejected": "Miembro rechazado correctamente.",
     "members.error.invalid_transition": "Transición de estado no permitida para este miembro.",
+    "contact.submitted": "Tu mensaje se envió correctamente. Te responderemos pronto.",
+    "contact.error.branch_org_mismatch": "La sucursal seleccionada no pertenece a esta organización.",
     "validation.curp_format": "La CURP no tiene un formato válido.",
     "validation.rfc_format": "El RFC no tiene un formato válido.",
     "validation.mexican_phone": "El teléfono debe contener exactamente 10 dígitos.",
@@ -67,5 +69,8 @@
     "job_status.draft": "Borrador",
     "job_status.active": "Activa",
     "job_status.paused": "Pausada",
-    "job_status.closed": "Cerrada"
+    "job_status.closed": "Cerrada",
+    "analytics.period.day": "Día",
+    "analytics.period.week": "Semana",
+    "analytics.period.month": "Mes"
 }

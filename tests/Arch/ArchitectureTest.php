@@ -321,6 +321,137 @@ arch('Membership enums are string-backed')
     ->toBeStringBackedEnums();
 
 /*
+ * Slice 006 — Engagement domain (public contact form + org-scoped admin inbox). The
+ * cross-isolation rule is the load-bearing one: the Engagement domain may lean only on
+ * Shared, the App\Support spine (ContactMessage adds the global OrganizationScope via
+ * booted(); the Engagement-local AssertsBranchBelongsToOrganization trait queries Branch
+ * scope-free via OrganizationScope::class), Illuminate, and the Spatie Data /
+ * TypeScriptTransformer / Database\Factories boundaries. ContactMessage belongsTo Branch /
+ * Organization (RESTRICT FKs) and the branch→org assertion queries a Branch row, so the
+ * Engagement domain references the Organization MODELS directly — a cross-domain FK MODEL
+ * reference is ALLOWED; calling another domain's Actions/Services is NOT (only
+ * App\Domain\Organization\Models is whitelisted, never the whole namespace).
+ *
+ * Engagement has NO enum (contact_messages has no status column — Decision B), so there is
+ * deliberately NO "Engagement enums are string-backed" rule (an empty enum namespace would
+ * make that expectation a no-op at best). There is NO acting-User argument on the sole
+ * (public, anonymous) Action, so App\Models is NOT whitelisted; and no Carbon-typed DTO
+ * field, so Carbon is NOT an edge. The Organization isolation rule is UNCHANGED: both FK
+ * parents soft-delete, so the new RESTRICT FK never trips DeleteBranchAction and no
+ * Organization → Engagement edge is added (Decision E). Engagement must never reach into
+ * HTTP (the message is a plain TEXT scalar — no UploadedFile boundary). __(), now() and
+ * request() are framework globals, not domain deps.
+ */
+
+arch('Engagement domain only leans on Shared, Models, App\\Support and framework boundaries')
+    ->expect('App\Domain\Engagement')
+    ->toOnlyUse([
+        'App\Domain\Shared',
+        'App\Support',
+        // Cross-domain FK MODEL references are allowed (ContactMessage belongsTo Branch /
+        // Organization; the branch→org assertion queries Branch). Organization Actions /
+        // Services remain forbidden — only \Models is whitelisted.
+        'App\Domain\Organization\Models',
+        'Illuminate',
+        'Spatie\LaravelData',
+        'Spatie\TypeScriptTransformer',
+        'Database\Factories',
+    ])
+    ->ignoring(['__', 'now', 'request']);
+
+arch('the Engagement domain never depends on HTTP')
+    ->expect('App\Domain\Engagement')
+    ->not->toUse('Illuminate\Http');
+
+arch('Engagement actions are final')
+    ->expect('App\Domain\Engagement\Actions')
+    ->classes()
+    ->toBeFinal();
+
+arch('Engagement data DTOs are final')
+    ->expect('App\Domain\Engagement\Data')
+    ->classes()
+    ->toBeFinal();
+
+/*
+ * Slice 007 — Analytics domain (the LAST CMS domain: page-view tracking + the org-scoped
+ * admin dashboard). The cross-isolation rule is the load-bearing one: Analytics is a
+ * read-heavy aggregate domain that READS five org-scoped source models across the program,
+ * so it legitimately references their MODELS (never their Actions/Services — only \Models is
+ * whitelisted). The edges:
+ *   - App\Domain\Content\Models       — Article (the views_count counter site + top-articles)
+ *   - App\Domain\Organization\Models  — Organization / Branch (PageView FK parents + filters)
+ *   - App\Domain\Jobs\Models          — JobPosting (active-vs-closed aggregate)
+ *   - App\Domain\Membership\Models    — Member (registration-trend aggregate)
+ *   - App\Domain\Engagement\Models    — ContactMessage (message-trend aggregate)
+ * plus Shared, the App\Support scope spine (PageView/DailySnapshot add the global
+ * OrganizationScope via booted()), Illuminate, the Spatie Data / TypeScriptTransformer /
+ * Database\Factories boundaries, and Carbon (the metric services lean on the Carbon clock
+ * for the date_trunc windows). There is NO acting-User argument on the sole (server-derived)
+ * Action, but App\Models is whitelisted symmetrically with the prior aggregate-reading
+ * domains in case a future report binds the actor. It must never reach into HTTP (the
+ * ip_hash is computed in the controller and handed to the Action as a plain string — the
+ * Action never sees Illuminate\Http). __(), now() and request() are framework globals.
+ *
+ * Unlike Engagement, Analytics HAS an enum (TimePeriod), so the string-backed-enum rule
+ * APPLIES. Confirm each toOnlyUse edge is actually used during implement; drop any unused.
+ */
+
+arch('Analytics domain only leans on Shared, Models, App\\Support and framework boundaries')
+    ->expect('App\Domain\Analytics')
+    ->toOnlyUse([
+        'App\Domain\Shared',
+        'App\Models',
+        'App\Support',
+        // Cross-domain aggregate-source MODEL references are allowed (the dashboard READS
+        // five org-scoped models). Their Actions / Services remain forbidden — only \Models.
+        'App\Domain\Content\Models',
+        'App\Domain\Organization\Models',
+        'App\Domain\Jobs\Models',
+        // JobStatus is the (string-backed) enum the EngagementAnalyticsService binds as a
+        // parameter in the `count(*) filter (where status = ?)` active-vs-closed aggregate —
+        // a magic-string-free enum VALUE reference (NOT a call into the Jobs domain's
+        // Actions/Services, which stay forbidden). Mirrors the cross-domain \Models edge.
+        'App\Domain\Jobs\Enums',
+        'App\Domain\Membership\Models',
+        'App\Domain\Engagement\Models',
+        'Illuminate',
+        // The metric services type-hint / lean on the Carbon clock for the date_trunc
+        // bucketing windows — the same clock edge the Organization/Membership DTOs surface.
+        'Carbon',
+        'Spatie\LaravelData',
+        'Spatie\TypeScriptTransformer',
+        'Database\Factories',
+    ])
+    // __(), now() and request() are framework globals (translation, Carbon clock, the
+    // current-request accessor the filter DTO leans on), not domain dependencies.
+    ->ignoring(['__', 'now', 'request']);
+
+arch('the Analytics domain never depends on HTTP')
+    ->expect('App\Domain\Analytics')
+    ->not->toUse('Illuminate\Http');
+
+arch('Analytics actions are final')
+    ->expect('App\Domain\Analytics\Actions')
+    ->classes()
+    ->toBeFinal();
+
+arch('Analytics data DTOs are final')
+    ->expect('App\Domain\Analytics\Data')
+    ->classes()
+    ->toBeFinal();
+
+arch('Analytics services are final')
+    ->expect('App\Domain\Analytics\Services')
+    ->classes()
+    ->toBeFinal();
+
+arch('Analytics enums are string-backed')
+    ->expect('App\Domain\Analytics\Enums')
+    ->toBeEnums()
+    ->toBeStringBackedEnums();
+
+/*
  * The scope spine lives under App\Support precisely so the org-scoped domain models
  * (Article, Branch, Director, Representative) can add the global OrganizationScope
  * WITHOUT importing App\Domain — which the per-domain isolation rules above forbid.

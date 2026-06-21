@@ -1,5 +1,18 @@
 declare namespace App {
 namespace Domain {
+namespace Analytics {
+namespace Data {
+export type AnalyticsFilterData = {
+organization_id: number | null,
+branch_id: number | null,
+category_id: number | null,
+period: App.Domain.Analytics.Enums.TimePeriod | null,
+};
+}
+namespace Enums {
+export type TimePeriod = 'day' | 'week' | 'month';
+}
+}
 namespace Content {
 namespace Data {
 export type ArchiveArticleData = {
@@ -25,6 +38,19 @@ export type PublishArticleData = object;
 }
 namespace Enums {
 export type ArticleStatus = 'draft' | 'published' | 'archived';
+}
+}
+namespace Engagement {
+namespace Data {
+export type SubmitContactData = {
+first_name: string,
+last_name: string,
+email: string,
+phone: string,
+message: string,
+organization_id: number,
+branch_id: number,
+};
 }
 }
 namespace Identity {
